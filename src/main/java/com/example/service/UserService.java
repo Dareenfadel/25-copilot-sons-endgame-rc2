@@ -1,9 +1,7 @@
 package com.example.service;
 
-import com.example.controller.OrderController;
 import com.example.model.Cart;
 import com.example.model.Order;
-import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,12 +44,12 @@ public class UserService extends MainService<User>{
         }
 
    //checkout  logic add order to user,empty cart, add order to orders
-        public void addOrderToUser(UUID userId) {
+        public void  addOrderToUser(UUID userId) {
          Order order= cartService.checkoutCart(userId);
           userRepository.addOrderToUser(userId, order);
           orderService.addOrder(order);
-     }
 
+        }
 
 
         public void emptyCart(UUID userId) {
@@ -62,6 +60,8 @@ public class UserService extends MainService<User>{
 
         public void removeOrderFromUser(UUID userId, UUID orderId) {
           userRepository.removeOrderFromUser(userId, orderId);
+
+
         }
 
 
@@ -69,6 +69,16 @@ public class UserService extends MainService<User>{
             userRepository.deleteUserById(userId);
         }
 
+    public void deleteProductFromCart(UUID userId, UUID productId) {
+        Cart cart= cartService.getCartByUserId(userId);
+        cartService.deleteProductFromCart(cart.getId(), productId);
+
     }
+    public void addProductToCart(UUID userId, UUID productId) {
+        Cart cart= cartService.getCartByUserId(userId);
+        cartService.addProductToCart(cart.getId(), productId);
+    }
+
+}
 
 
