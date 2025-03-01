@@ -3,7 +3,7 @@
 	"image": "mcr.microsoft.com/devcontainers/java:1-21-bullseye",
 	"features": {
 		"ghcr.io/devcontainers/features/java:1": {
-			"version": "none",
+			"version": "23",
 			"installMaven": "true",
 			"installGradle": "false"
 		}
