@@ -9,18 +9,21 @@ public class User {
     private String name;
     private List<Order> orders=new ArrayList<>();
     public User() {
-        this.id = UUID.randomUUID();
+
         this.orders= new ArrayList<>();
     }
 
     public User(String name) {
-        this.id = UUID.randomUUID();
         this.name = name;
         this.orders= new ArrayList<>();
     }
 
     public User(UUID id, String name, List<Order> orders) {
         this.id = id;
+        this.name = name;
+        this.orders = orders;
+    }
+    public User(String name, List<Order> orders) {
         this.name = name;
         this.orders = orders;
     }
@@ -48,7 +51,21 @@ public class User {
         this.orders = orders;
     }
 
+    @Override
+    public boolean equals(Object otherUser) {
+        if (this == otherUser) {
+            return true;
+        }
 
+        if (otherUser == null || getClass() != otherUser.getClass()) {
+            return false;
+        }
+
+        User user = (User) otherUser;
+        return id.equals(user.id) &&
+                name.equals(user.name) &&
+                orders.equals(user.orders);
+    }
 }
 
 

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import com.example.model.Order;
@@ -13,55 +14,39 @@ import com.example.model.Order;
 @SuppressWarnings("rawtypes")
 public class UserRepository extends MainRepository<User> {
 
-    public UserRepository() {
 
-        }
 
     public ArrayList<User> getUsers() {
         return findAll();
     }
 
     public User getUserById(UUID userId) {
-         return findAll().stream()
-                .filter(user -> user.getId().equals(userId))
-                .findFirst()
-                .orElse(null);
+       return findById(userId);
     }
     public User addUser(User user) {
-        if (findAll().stream().noneMatch(u -> u.getId().equals(user.getId()))) {
-            save(user);
-        }
-        return user;
+        return create(user);
     }
     public List<Order> getOrdersByUserId(UUID userId) {
-        User user = getUserById(userId);
-        return user != null ? user.getOrders() : new ArrayList<>();
+        if (findById(userId)==null){
+            throw new NoSuchElementException("User with ID " + userId + " not found");
+        }
+        return findById(userId).getOrders();
     }
 
     public void addOrderToUser(UUID userId, Order order) {
-        ArrayList<User> users = findAll();
-        for (User user : users) {
-            if (user.getId().equals(userId)) {
-                user.getOrders().add(order);
-                saveAll(users);
-                return;
-            }
+        if (findById(userId)==null) {
+            throw new NoSuchElementException("User with ID " + userId + " not found");
         }
+        updateById(userId, user -> user.getOrders().add(order));
     }
     public void removeOrderFromUser(UUID userId, UUID orderId) {
-        ArrayList<User> users = findAll();
-        for (User user : users) {
-            if (user.getId().equals(userId)) {
-                user.getOrders().removeIf(order -> order.getId().equals(orderId));
-                saveAll(users);
-                return;
-            }
+        if (findById(userId)==null) {
+            throw new NoSuchElementException("User with ID " + userId + " not found");
         }
+        updateById(userId, user -> user.getOrders().removeIf(order -> order.getId().equals(orderId)));
     }
     public void deleteUserById(UUID userId) {
-        ArrayList<User> users = findAll();
-        users.removeIf(user -> user.getId().equals(userId));
-        saveAll(users);
+        deleteById(userId);
     }
 
 
@@ -75,4 +60,13 @@ public class UserRepository extends MainRepository<User> {
         return User[].class;
     }
 
+    @Override
+    public UUID getIdFromModel(User model) {
+        return model.getId();
+    }
+
+    @Override
+    public void setIdForModel(User model, UUID id) {
+        model.setId(id);
+    }
 }
