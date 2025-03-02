@@ -13,37 +13,4 @@ import java.util.UUID;
 @RequestMapping("/cart")
 public class CartController {
 
-    CartService cartService;
-    @Autowired
-    public CartController(CartService cartService){
-        this.cartService = cartService;
-    }
-    @PostMapping("/")
-    public Cart addCart(@RequestBody Cart cart){
-        return cartService.addCart(cart);
-    }
-    @GetMapping("/")
-    public ArrayList<Cart> getCarts(){
-        return cartService.getCarts();
-    }
-    @GetMapping("/{cartId}")
-    public Cart getCartById(@PathVariable UUID cartId){
-        return cartService.getCartById(cartId);
-    }
-    @PutMapping("/addProduct/{cartId}")
-    public String addProductToCart(@PathVariable UUID cartId, @RequestBody Product product){
-        cartService.addProductToCart(cartId, product);
-        return cartId + " updated";
-    }
-    @DeleteMapping("/delete/{cartId}")
-    public String deleteCartById(@PathVariable UUID cartId){
-        cartService.deleteCartById(cartId);
-        return cartId + " deleted";
-    }
-    @DeleteMapping("/deleteProduct/{cartId}")
-    public String deleteProductFromCart(@PathVariable UUID cartId, @RequestBody Product product){
-        cartService.deleteProductFromCart(cartId, product);
-        return cartId + " updated";
-    }
-
 }

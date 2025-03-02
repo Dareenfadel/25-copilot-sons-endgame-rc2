@@ -45,8 +45,6 @@ public class CartRepository extends MainRepository<Cart> {
         }
         cart.getProducts().add(product);
         ArrayList<Cart> carts = getCarts();
-
-
         for (int i = 0; i < carts.size(); i++) {
             if (carts.get(i).getId().equals(cart.getId())) {
                 carts.set(i, cart);
@@ -54,9 +52,6 @@ public class CartRepository extends MainRepository<Cart> {
                 return;
             }
         }
-
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found for update!");
-
     }
     public void deleteProductFromCart(UUID cartId, Product product){
         Cart cart = getCartById(cartId);
@@ -78,6 +73,4 @@ public class CartRepository extends MainRepository<Cart> {
         carts.removeIf(cart -> cart.getId().equals(cartId));
         overrideData(carts);
     }
-
-
 }

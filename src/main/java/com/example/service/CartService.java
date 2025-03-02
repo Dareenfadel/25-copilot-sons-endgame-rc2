@@ -44,11 +44,7 @@ public class CartService extends MainService<Cart>{
 
     }
     public Cart getCartById(UUID cartId){
-        Cart cart= cartRepository.getCartById(cartId);
-        if(cart==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found!");
-        }
-        return cart;
+        return cartRepository.getCartById(cartId);
     }
     public Cart getCartByUserId(UUID userId){
         User user = userRepository.getUserById(userId);
@@ -62,18 +58,14 @@ public class CartService extends MainService<Cart>{
         if (existingProduct == null) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
         }
-
         cartRepository.addProductToCart(cartId, product);
-
     }
     public void deleteProductFromCart(UUID cartId, Product product){
-        Product existingProduct = productRepository.getProductById(product.getId());
-        if (existingProduct == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
-        }
+//        Product existingProduct = productRepository.getProductById(product.getId());
+//        if (existingProduct == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
+//        }
         cartRepository.deleteProductFromCart(cartId, product);
-
-
     }
     public void deleteCartById(UUID cartId){
         Cart cart = cartRepository.getCartById(cartId);
