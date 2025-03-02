@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.example.model.Cart;
+import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.CartRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -74,6 +76,22 @@ public class CartService extends MainService<Cart>{
         }
         cartRepository.deleteCartById(cartId);
     }
+        public Order checkoutCart(UUID userId) {
+                List<Product> cartItems = cartRepository.getCartByUserId(userId).getProducts();
+                if (cartItems.isEmpty()) {
+                        throw new IllegalStateException("Cart is empty");
+                }
+                double totalAmount = cartItems.stream()
+                        .mapToDouble(Product::getPrice)
+                        .sum();
+                Order newOrder = new Order(UUID.randomUUID(), userId,totalAmount, new ArrayList<>(cartItems));
+                cartRepository.emptyCart(userId);
+                return newOrder;
+
+        }
+        public void emptyCart(UUID userId) {
+                cartRepository.emptyCart(userId);
+        }
 
 
 

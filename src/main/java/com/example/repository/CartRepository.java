@@ -73,4 +73,20 @@ public class CartRepository extends MainRepository<Cart> {
         carts.removeIf(cart -> cart.getId().equals(cartId));
         overrideData(carts);
     }
+
+    public void emptyCart(UUID userId) {
+        Cart cart = getCartByUserId(userId);
+        if (cart == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found!");
+        }
+        cart.getProducts().clear();
+        ArrayList<Cart> carts = getCarts();
+        for (int i = 0; i < carts.size(); i++) {
+            if (carts.get(i).getId().equals(cart.getId())) {
+                carts.set(i, cart);
+                overrideData(carts);
+                return;
+            }
+        }
+    }
 }
