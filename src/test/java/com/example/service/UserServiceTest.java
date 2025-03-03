@@ -6,6 +6,7 @@ import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.CartRepository;
+import com.example.repository.OrderRepository;
 import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import com.example.utils.TestUtils;
@@ -38,6 +39,8 @@ public class UserServiceTest {
 
     @TempDir
     private Path productTempDir;
+    @TempDir
+    private Path orderTempDir;
 
 
     private final UserRepository userRepository;
@@ -53,16 +56,30 @@ public class UserServiceTest {
                     return getTestCartDataFilePath().toString();
                 }
             };
-            ProductRepository productRepository = new ProductRepository();
+            ProductRepository productRepository = new ProductRepository(){
+                @Override
+                protected String getDataPath() {
+                    return getTestProductDataFilePath().toString();
+                }
+            };
+           //create order repository
+            OrderRepository orderRepository = new OrderRepository(){
+                @Override
+                protected String getDataPath() {
+                    return getTestOrderDataFilePath().toString();
+                }
+            };
+
+
             userRepository = new UserRepository() {
                 @Override
                 protected String getDataPath() {
                     return getTestDataFilePath().toString();
                 }
             };
-
+            OrderService orderService = new OrderService(orderRepository);
             cartService = new CartService(cartRepository, productRepository, userRepository);
-            userService = new UserService(userRepository, cartService, new OrderService(), new ProductService(productRepository));
+            userService = new UserService(userRepository, cartService, orderService, new ProductService(productRepository));
 
     }
 
@@ -592,6 +609,8 @@ public class UserServiceTest {
         var orders = readTestUserData().get(0).getOrders();
         assertTrue(orders.size() == 1);
         assertEquals(30.0, orders.get(0).getTotalPrice());
+        //check if orders file has one order added
+        assertEquals(1, readTestOrderData().size());
         assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
     }
     @Test
@@ -659,6 +678,9 @@ public class UserServiceTest {
     private List<Product> readTestProductData() throws IOException {
         return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Product>>() {});
     }
+    private List<Order> readTestOrderData() throws IOException {
+        return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Order>>() {});
+    }
     private void writeTestUserData(List<User> users) throws IOException {
         objectMapper.writeValue(getTestDataFilePath().toFile(), users);
     }
@@ -668,6 +690,7 @@ public class UserServiceTest {
     private void writeTestProductData(List<Product> products) throws IOException {
         objectMapper.writeValue(getTestProductDataFilePath().toFile(), products);
     }
+
     private Path getTestDataFilePath() {
         return userTempDir.resolve("users.json");
     }
@@ -676,6 +699,9 @@ public class UserServiceTest {
     }
     private Path getTestProductDataFilePath() {
         return productTempDir.resolve("products.json");
+    }
+    private Path getTestOrderDataFilePath() {
+        return orderTempDir.resolve("orders.json");
     }
 
 }
