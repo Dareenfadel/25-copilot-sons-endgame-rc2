@@ -315,7 +315,10 @@ public class UserServiceTest {
 
         // Assert
         assertEquals(List.of(user2), readTestUserData());
-    }//GET THE USER'S OREDERS
+    }
+    //.....................
+    //GET THE USER'S OREDERS
+    //.....................
     @Test
     public void getOrdersByUserId_WhenUserExists_ShouldReturnUserOrders() throws IOException {
         // Arrange
@@ -331,9 +334,12 @@ public class UserServiceTest {
         writeTestUserData(List.of(user1, user2));
 
         // Act
+
         var return1 = userService.getOrdersByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001"));
         var return2 = userService.getOrdersByUserId(UUID.fromString("00000000-0000-0000-0000-000000000002"));
 
+        System.out.print(return1.get(0).getUserId());
+        System.out.print(user1.getOrders().get(0).getUserId());
         // Assert
         assertEquals(user1.getOrders(), return1);
         assertEquals(user2.getOrders(), return2);
@@ -442,6 +448,7 @@ public class UserServiceTest {
 
         // Act
         userService.removeOrderFromUser(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000102"));
+
 
         // Assert
         assertEquals(List.of(order1, order3), readTestUserData().get(0).getOrders());
