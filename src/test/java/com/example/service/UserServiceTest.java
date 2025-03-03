@@ -1,9 +1,12 @@
 package com.example.service;
 
 
+import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
+import com.example.repository.CartRepository;
+import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import com.example.utils.TestUtils;
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -28,21 +31,39 @@ public class UserServiceTest {
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @TempDir
-    private Path tempDir;
+    private Path userTempDir;
+
+    @TempDir
+    private Path cartTempDir;
+
+    @TempDir
+    private Path productTempDir;
+
 
     private final UserRepository userRepository;
     private final UserService userService;
+    private final CartService cartService;
 
 
     public UserServiceTest() {
-        userRepository = new UserRepository() {
-            @Override
-            protected String getDataPath() {
-                return getTestDataFilePath().toString();
-            }
-        };
 
-        userService = new UserService(userRepository,new CartService(),new OrderService());
+            CartRepository cartRepository = new CartRepository(){
+                @Override
+                protected String getDataPath() {
+                    return getTestCartDataFilePath().toString();
+                }
+            };
+            ProductRepository productRepository = new ProductRepository();
+            userRepository = new UserRepository() {
+                @Override
+                protected String getDataPath() {
+                    return getTestDataFilePath().toString();
+                }
+            };
+
+            cartService = new CartService(cartRepository, productRepository, userRepository);
+            userService = new UserService(userRepository, cartService, new OrderService(), new ProductService(productRepository));
+
     }
 
     //---------------------------
@@ -443,21 +464,174 @@ public class UserServiceTest {
     // ----------------------------
     //EMPTY CART TEST
     //---------------------------
-   //1)successful trial
-    //2)user doesnt exist throw no such ..
-    //3) cart already empty
-    //4)no users exist
-    //5)duplicate ids
-    //6)no cart for this user throw no such ..
-    //7)cart has only 1 item
+    @Test
+    public void emptyCart_WhenCartExists_ShouldEmptyCart() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of(cart));
+        cartService.addCart(cart);
+
+        // Act
+        userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
+    @Test
+    public void emptyCart_WhenUserDoesNotExist_ShouldThrowException() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+
+        writeTestCartData(List.of(cart));
+
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+    }
+    @Test
+    public void emptyCart_WhenCartIsEmpty_ShouldNotThrowException() throws IOException {
+        // Arrange
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+       var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), new ArrayList<Product>());
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of(cart));
+
+        // Act
+        userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
+    @Test
+    public void emptyCart_WhenNoUsersExist_ShouldThrowException() throws IOException {
+        // Arrange
+        writeTestUserData(List.of());
+        writeTestCartData(List.of());
+
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+    }
+    @Test
+    public void emptyCart_WhenDuplicateIdsExist_ShouldEmptyCartForFirstUser() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of(cart));
+        cartService.addCart(cart);
+
+        // Act
+        userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
+    @Test
+    public void emptyCart_WhenCartDoesNotExist_ShouldThrowException() throws IOException {
+        // Arrange
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of());
+
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+    }
+    @Test
+    public void emptyCart_WhenCartHasOnlyOneItem_ShouldEmptyCart() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of(cart));
+        cartService.addCart(cart);
+
+        // Act
+        userService.emptyCart(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
 
      //---------------------------
     //ADD ORDER TO USER TEST
     //---------------------------
-    //1)successful trial
-    //2)user doesnt exist throw no such ..
-    //3)cart is empty throw exception or return without creating an order
-    //4)
+    @Test
+    public void addOrderToUser_WhenUserExistsAndCartIsNotEmpty_ShouldAddOrderToUserAndEmptyCart() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+
+        cartService.addCart(cart);
+
+        // Act
+        userService.addOrderToUser(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        var orders = readTestUserData().get(0).getOrders();
+        assertTrue(orders.size() == 1);
+        assertEquals(30.0, orders.get(0).getTotalPrice());
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
+    @Test
+    public void addOrderToUser_WhenUserDoesNotExist_ShouldThrowException() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+
+        writeTestCartData(List.of(cart));
+
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> userService.addOrderToUser(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+    }
+    @Test
+    public void addOrderToUser_WhenCartIsEmpty_ShouldThrowException() throws IOException {
+        // Arrange
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), new ArrayList<Product>());
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+        writeTestCartData(List.of(cart));
+
+        // Act & Assert
+        assertThrows(IllegalStateException.class, () -> userService.addOrderToUser(UUID.fromString("00000000-0000-0000-0000-000000000001")));
+    }
+    @Test
+    public void addOrderToUser_WhenCartHasOnlyOneItem_ShouldAddOrderToUserAndEmptyCart() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user));
+
+        cartService.addCart(cart);
+
+        // Act
+        userService.addOrderToUser(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        var orders = readTestUserData().get(0).getOrders();
+        assertTrue(orders.size() == 1);
+        assertEquals(10.0, orders.get(0).getTotalPrice());
+        assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
+    }
+
 
 
 
@@ -472,13 +646,29 @@ public class UserServiceTest {
     private List<User> readTestUserData() throws IOException {
         return objectMapper.readValue(getTestDataFilePath().toFile(), new TypeReference<List<User>>() {});
     }
-
+    private List<Cart> readTestCartData() throws IOException {
+        return objectMapper.readValue(getTestCartDataFilePath().toFile(), new TypeReference<List<Cart>>() {});
+    }
+    private List<Product> readTestProductData() throws IOException {
+        return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Product>>() {});
+    }
     private void writeTestUserData(List<User> users) throws IOException {
         objectMapper.writeValue(getTestDataFilePath().toFile(), users);
     }
-
+    private void writeTestCartData(List<Cart> carts) throws IOException {
+        objectMapper.writeValue(getTestCartDataFilePath().toFile(), carts);
+    }
+    private void writeTestProductData(List<Product> products) throws IOException {
+        objectMapper.writeValue(getTestProductDataFilePath().toFile(), products);
+    }
     private Path getTestDataFilePath() {
-        return tempDir.resolve("users.json");
+        return userTempDir.resolve("users.json");
+    }
+    private Path getTestCartDataFilePath() {
+        return cartTempDir.resolve("carts.json");
+    }
+    private Path getTestProductDataFilePath() {
+        return productTempDir.resolve("products.json");
     }
 
 }

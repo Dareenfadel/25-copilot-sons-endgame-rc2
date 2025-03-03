@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-
+@Component
 public class Order {
     private UUID id;
     private UUID userId;
@@ -22,8 +22,18 @@ public class Order {
         this.totalPrice = totalPrice;
         this.products = products;
     }
+     public Order(UUID userId, double totalPrice, List<Product> products) {
 
+        this.userId = userId;
+        this.totalPrice = totalPrice;
+        this.products = products;
+    }
+    public Order() {}
     public UUID getId() {
         return id;
     }
+    public double getTotalPrice() {
+        return totalPrice;
+    }
+
 }

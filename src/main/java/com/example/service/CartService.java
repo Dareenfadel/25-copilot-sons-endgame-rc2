@@ -56,10 +56,10 @@ public class CartService extends MainService<Cart>{
         return cartRepository.getCartByUserId(userId);
     }
     public void addProductToCart(UUID cartId, Product product){
-        Product existingProduct = productRepository.getProductById(product.getId());
-        if (existingProduct == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
-        }
+//        Product existingProduct = productRepository.getProductById(product.getId());
+//        if (existingProduct == null) {
+//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
+//        }
         cartRepository.addProductToCart(cartId, product);
     }
     public void deleteProductFromCart(UUID cartId, Product product){
@@ -84,7 +84,7 @@ public class CartService extends MainService<Cart>{
                 double totalAmount = cartItems.stream()
                         .mapToDouble(Product::getPrice)
                         .sum();
-                Order newOrder = new Order(UUID.randomUUID(), userId,totalAmount, new ArrayList<>(cartItems));
+                Order newOrder = new Order(userId, totalAmount, cartItems);
                 cartRepository.emptyCart(userId);
                 return newOrder;
 

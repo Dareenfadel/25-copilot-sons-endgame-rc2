@@ -2,11 +2,13 @@ package com.example.repository;
 
 import com.example.model.Cart;
 import com.example.model.Product;
+import com.example.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Repository
@@ -16,7 +18,7 @@ public class CartRepository extends MainRepository<Cart> {
     }
     @Override
     protected String getDataPath() {
-        return "src\\main\\java\\com\\example\\data\\carts.json";
+        return DATA_DIRECTORY.resolve("carts.json").toString();
     }
 
     @Override
@@ -35,7 +37,12 @@ public class CartRepository extends MainRepository<Cart> {
         return findAll().stream().filter(cart -> cart.getId().equals(cartId)).findFirst().orElse(null);
     }
     public Cart getCartByUserId(UUID userId){
-        return findAll().stream().filter(cart -> cart.getUserId().equals(userId)).findFirst().orElse(null);
+        ArrayList<Cart> carts = findAll();
+            if (carts == null) {
+           return null;
+            }
+
+        return carts.stream().filter(cart -> cart.getUserId().equals(userId)).findFirst().orElse(null);
     }
 
     public void addProductToCart(UUID cartId, Product product){
@@ -76,9 +83,11 @@ public class CartRepository extends MainRepository<Cart> {
 
     public void emptyCart(UUID userId) {
         Cart cart = getCartByUserId(userId);
-        if (cart == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found!");
-        }
+
+            if (cart == null) {
+                throw new NoSuchElementException("Cart not found for user: " + userId);
+            }
+
         cart.getProducts().clear();
         ArrayList<Cart> carts = getCarts();
         for (int i = 0; i < carts.size(); i++) {
@@ -88,5 +97,14 @@ public class CartRepository extends MainRepository<Cart> {
                 return;
             }
         }
+    }
+    @Override
+    public UUID getIdFromModel(Cart model) {
+        return model.getId();
+    }
+
+    @Override
+    public void setIdForModel(Cart model, UUID id) {
+        model.setId(id);
     }
 }

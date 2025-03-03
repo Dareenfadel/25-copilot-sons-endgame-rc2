@@ -2,6 +2,7 @@ package com.example.service;
 
 import com.example.model.Cart;
 import com.example.model.Order;
+import com.example.model.Product;
 import com.example.model.User;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -17,11 +19,13 @@ public class UserService extends MainService<User>{
     private final UserRepository userRepository;
     private final CartService cartService;
     private final OrderService orderService;
+    private final ProductService productService;
     @Autowired
-    public UserService(UserRepository userRepository, CartService cartService, OrderService orderService) {
+    public UserService(UserRepository userRepository, CartService cartService, OrderService orderService,ProductService productService){
         this.userRepository = userRepository;
         this.cartService =  cartService;
         this.orderService = orderService;
+        this.productService = productService;
     }
 
         public User addUser(User user) {
@@ -44,18 +48,21 @@ public class UserService extends MainService<User>{
         }
 
    //checkout  logic add order to user,empty cart, add order to orders
-//        public void  addOrderToUser(UUID userId) {
-//         Order order= cartService.checkoutCart(userId);
-//          userRepository.addOrderToUser(userId, order);
-//          orderService.addOrder(order);
-//
-//        }
-//
-//
-//        public void emptyCart(UUID userId) {
-//            cartService.emptyCart(userId);
-//
-//        }
+        public void  addOrderToUser(UUID userId) {
+           Order order= cartService.checkoutCart(userId);
+          userRepository.addOrderToUser(userId, order);
+          orderService.addOrder(order);
+
+        }
+
+
+        public void emptyCart(UUID userId) {
+           User user=  getUserById(userId);
+             if(user==null)
+                    throw new NoSuchElementException("User not found");
+            cartService.emptyCart(userId);
+
+        }
 
 
         public void removeOrderFromUser(UUID userId, UUID orderId) {
@@ -67,15 +74,31 @@ public class UserService extends MainService<User>{
             userRepository.deleteUserById(userId);
         }
 
-//    public void deleteProductFromCart(UUID userId, UUID productId) {
-//        Cart cart= cartService.getCartByUserId(userId);
-//        cartService.deleteProductFromCart(cart.getId(), productId);
-//
-//    }
-//    public void addProductToCart(UUID userId, UUID productId) {
-//        Cart cart= cartService.getCartByUserId(userId);
-//        cartService.addProductToCart(cart.getId(), productId);
-//    }
+        //needed by the controller :)
+    public void deleteProductFromCart(UUID userId, UUID productId) {
+        Cart cart= cartService.getCartByUserId(userId);
+
+            if (cart == null) {
+                throw new NoSuchElementException("cart not found");
+            }
+        Product product= productService.getProductById(productId);
+        if (product == null) {
+            throw new NoSuchElementException("product not found");
+        }
+        cartService.deleteProductFromCart(cart.getId(), product);
+
+    }
+    public void addProductToCart(UUID userId, UUID productId) {
+        Cart cart= cartService.getCartByUserId(userId);
+        if (cart == null) {
+            throw new NoSuchElementException("cart not found");
+        }
+        Product product= productService.getProductById(productId);
+        if (product == null) {
+            throw new NoSuchElementException("product not found");
+        }
+        cartService.addProductToCart(cart.getId(), product);
+    }
 
 }
 

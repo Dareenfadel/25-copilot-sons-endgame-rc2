@@ -53,5 +53,15 @@ public class Cart {
         return products;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        Cart cart = (Cart) o;
+
+        if (!id.equals(cart.id)) return false;
+        if (!userId.equals(cart.userId)) return false;
+        return products.equals(cart.products);
+    }
 }
