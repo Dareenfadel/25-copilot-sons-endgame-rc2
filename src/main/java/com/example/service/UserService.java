@@ -90,9 +90,14 @@ public class UserService extends MainService<User>{
     }
     public void addProductToCart(UUID userId, UUID productId) {
         Cart cart= cartService.getCartByUserId(userId);
+        //create new cart if not exists
         if (cart == null) {
-            throw new NoSuchElementException("cart not found");
+            cart =new Cart();
+            cart.setUserId(userId);
+            cartService.addCart(cart);
+            cart=cartService.getCartByUserId(userId);
         }
+
         Product product= productService.getProductById(productId);
         if (product == null) {
             throw new NoSuchElementException("product not found");

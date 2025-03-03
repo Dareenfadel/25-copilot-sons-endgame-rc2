@@ -53,7 +53,10 @@ public class CartService extends MainService<Cart>{
         if(user==null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
-        return cartRepository.getCartByUserId(userId);
+        Cart cart= cartRepository.getCartByUserId(userId);
+        if(cart==null)
+            return addCart(new Cart(userId));
+        else return cart;
     }
     public void addProductToCart(UUID cartId, Product product){
 //        Product existingProduct = productRepository.getProductById(product.getId());

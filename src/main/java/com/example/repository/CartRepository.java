@@ -50,6 +50,7 @@ public class CartRepository extends MainRepository<Cart> {
         if(cart==null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Cart not found!");
         }
+        //not valid cartId but when adding using userid should create cart if not exists
         cart.getProducts().add(product);
         ArrayList<Cart> carts = getCarts();
         for (int i = 0; i < carts.size(); i++) {
