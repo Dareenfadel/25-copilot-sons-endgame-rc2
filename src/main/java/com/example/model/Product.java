@@ -83,5 +83,4 @@ public class Product {
                 name.equals(product.name) &&
                 price == product.price;
     }
-
 }
