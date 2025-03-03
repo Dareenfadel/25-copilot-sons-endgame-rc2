@@ -53,12 +53,16 @@ public class CartService extends MainService<Cart>{
         if(user==null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
         }
-        return cartRepository.getCartByUserId(userId);
+        Cart cart= cartRepository.getCartByUserId(userId);
+        if(cart==null)
+            return addCart(new Cart(userId));
+        else return cart;
     }
     public void addProductToCart(UUID cartId, Product product){
+        //if product not exist add to products first instead of exception
         Product existingProduct = productRepository.getProductById(product.getId());
         if (existingProduct == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
+            productRepository.addProduct(product);
         }
         cartRepository.addProductToCart(cartId, product);
     }
@@ -84,7 +88,7 @@ public class CartService extends MainService<Cart>{
                 double totalAmount = cartItems.stream()
                         .mapToDouble(Product::getPrice)
                         .sum();
-                Order newOrder = new Order(UUID.randomUUID(), userId,totalAmount, new ArrayList<>(cartItems));
+                Order newOrder = new Order(userId, totalAmount, cartItems);
                 cartRepository.emptyCart(userId);
                 return newOrder;
 
