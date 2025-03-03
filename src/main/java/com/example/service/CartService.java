@@ -59,10 +59,11 @@ public class CartService extends MainService<Cart>{
         else return cart;
     }
     public void addProductToCart(UUID cartId, Product product){
-//        Product existingProduct = productRepository.getProductById(product.getId());
-//        if (existingProduct == null) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found!");
-//        }
+        //if product not exist add to products first instead of exception
+        Product existingProduct = productRepository.getProductById(product.getId());
+        if (existingProduct == null) {
+            productRepository.addProduct(product);
+        }
         cartRepository.addProductToCart(cartId, product);
     }
     public void deleteProductFromCart(UUID cartId, Product product){
