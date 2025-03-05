@@ -5,8 +5,10 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.springframework.context.annotation.Primary;
@@ -153,7 +155,7 @@ public abstract class MainRepository<T> {
 
         saveAll(allData);
     }
-    
+
     /**
      * Updates all entities in the repository.
      * 
@@ -188,6 +190,62 @@ public abstract class MainRepository<T> {
                 return;
             }
         }
+    }
+
+    /**
+     * Cascades an update operation to another repository.
+     * 
+     * For example, if a product is updated in the product repository, this method
+     * can be used to cascade the update to all carts that contain the product in
+     * the cart repository. So in this case, the cart repository is the
+     * otherRepository, the updated product is the newModel, and the getModels
+     * function takes a cart and returns a list of products in the cart.
+     * 
+     * @param otherRepository The repository to cascade the update operation to
+     * @param newModel        The updated model object to cascade
+     * @param getModels       A function that returns a list of models
+     */
+    public <V> void cascadeUpdate(
+            MainRepository<V> otherRepository,
+            T newModel,
+            Function<V, List<T>> getModels) {
+        otherRepository.updateEach((model) -> {
+            var models = getModels.apply(model);
+
+            for (int i = 0; i < models.size(); i++) {
+                if (getIdFromModel(models.get(i)).equals(getIdFromModel(newModel))) {
+                    models.set(i, newModel);
+                }
+            }
+        });
+    }
+
+    /**
+     * Cascades a delete operation to another repository.
+     * 
+     * For example, if a product is deleted in the product repository, this method
+     * can be used to cascade the delete to all carts that contain the product in
+     * the cart repository. So in this case, the cart repository is the
+     * otherRepository, the ID of the deleted product is the id, and the getModels
+     * function takes a cart and returns a list of products in the cart.
+     * 
+     * @param otherRepository The repository to cascade the delete operation to
+     * @param id              The UUID identifier of the deleted model
+     * @param getModels       A function that returns a list of models
+     */
+    public <V> void cascadeDelete(
+            MainRepository<V> otherRepository,
+            UUID id,
+            Function<V, List<T>> getModels) {
+        otherRepository.updateEach((model) -> {
+            var models = getModels.apply(model);
+
+            for (int i = 0; i < models.size(); i++) {
+                if (getIdFromModel(models.get(i)).equals(id)) {
+                    models.remove(i);
+                }
+            }
+        });
     }
 
     /**

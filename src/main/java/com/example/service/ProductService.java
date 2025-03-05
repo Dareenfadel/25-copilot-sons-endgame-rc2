@@ -45,15 +45,7 @@ public class ProductService extends MainService<Product> {
         var newProduct = productRepository.updateProduct(productId, newName, newPrice);
 
         // Cascade the update to all carts that contain the product
-        cartRepository.updateEach((cart) -> {
-            var products = cart.getProducts();
-
-            for (int i = 0; i < products.size(); i++) {
-                if (products.get(i).getId().equals(newProduct.getId())) {
-                    products.set(i, newProduct);
-                }
-            }
-        });
+        productRepository.cascadeUpdate(cartRepository, newProduct, (cart) -> cart.getProducts());
 
         return newProduct;
     }
@@ -63,15 +55,7 @@ public class ProductService extends MainService<Product> {
         productRepository.deleteProductById(productId);
 
         // Cascade the deletion to all carts that contain the product
-        cartRepository.updateEach((cart) -> {
-            var products = cart.getProducts();
-
-            for (int i = 0; i < products.size(); i++) {
-                if (products.get(i).getId().equals(productId)) {
-                    products.remove(i);
-                }
-            }
-        });
+        productRepository.cascadeDelete(cartRepository, productId, (cart) -> cart.getProducts());
     }
 
     // ----------------------
@@ -80,7 +64,7 @@ public class ProductService extends MainService<Product> {
 
     public void applyDiscount(double discount, ArrayList<UUID> productIds) {
         productRepository.applyDiscount(discount, productIds);
-        
+
         // Cascade the discount to all carts that contain the products
         cartRepository.updateEach((cart) -> {
             for (var product : cart.getProducts()) {
