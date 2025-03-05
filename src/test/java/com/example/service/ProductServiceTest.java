@@ -12,7 +12,10 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.example.model.Cart;
 import com.example.model.Product;
+import com.example.repository.CartRepository;
 import com.example.repository.ProductRepository;
 import com.example.utils.TestUtils;
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -32,16 +35,24 @@ class ProductServiceTest {
     private Path tempDir;
 
     private final ProductRepository productRepository;
+    private final CartRepository cartRepository;
+
     private final ProductService productService;
 
     public ProductServiceTest() {
         productRepository = new ProductRepository() {
             @Override
             protected String getDataPath() {
-                return getTestDataFilePath().toString();
+                return getProductsTestDataFilePath().toString();
             }
         };
-        productService = new ProductService(productRepository);
+        cartRepository = new CartRepository() {
+            @Override
+            protected String getDataPath() {
+                return getCartsTestDataFilePath().toString();
+            }
+        };
+        productService = new ProductService(productRepository, cartRepository);
     }
 
     // ----------------------------
@@ -170,7 +181,7 @@ class ProductServiceTest {
     public void getProducts_WhenDataFileExistsButContainsInvalidJsonSyntax_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath(), "invalid json");
+        Files.writeString(getProductsTestDataFilePath(), "invalid json");
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -182,7 +193,7 @@ class ProductServiceTest {
     public void getProducts_WhenDataFileContainsInvalidProductData_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath(), """
+        Files.writeString(getProductsTestDataFilePath(), """
                         [
                             {
                                 "id": "00000000-0000-0000-0000-000000000001",
@@ -348,6 +359,115 @@ class ProductServiceTest {
         assertEquals(expectedProducts, readTestProductData());
     }
 
+    @Test
+    public void updateProduct_WhenACartContainsTheProduct_ShouldUpdateProductOnlyInCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        var expectedProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "New Product 1",
+                123.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct, product2));
+
+        // Act
+        var returnProduct = productService.updateProduct(product1.getId(), "New Product 1", 123.0);
+
+        // Assert
+        assertEquals(expectedProduct, returnProduct);
+        assertEquals(List.of(expectedProduct, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void updateProduct_WhenACartContainsTheProductMultipleTimes_ShouldUpdateProductInAllOccurrencesInCarts()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2, product1));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        var expectedProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "New Product 1",
+                123.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct, product2, expectedProduct));
+
+        // Act
+        var returnProduct = productService.updateProduct(product1.getId(), "New Product 1", 123.0);
+
+        // Assert
+        assertEquals(expectedProduct, returnProduct);
+        assertEquals(List.of(expectedProduct, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void updateProduct_WhenMultipleCartsContainTheProduct_ShouldUpdateProductInAllCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product1));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        var expectedProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "New Product 1",
+                123.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct, product2));
+        var expectedCart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(expectedProduct));
+
+        // Act
+        var returnProduct = productService.updateProduct(product1.getId(), "New Product 1", 123.0);
+
+        // Assert
+        assertEquals(expectedProduct, returnProduct);
+        assertEquals(List.of(expectedProduct, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, expectedCart2), readTestCartData());
+    }
+
     // ----------------------------
     // deleteProductById
     // ----------------------------
@@ -395,6 +515,106 @@ class ProductServiceTest {
 
         // Assert
         assertEquals(List.of(), readTestProductData());
+    }
+
+    @Test
+    public void deleteProduct_WhenACartContainsTheProduct_ShouldDeleteProductOnlyInCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product2));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.deleteProductById(product1.getId());
+
+        // Assert
+        assertEquals(List.of(product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void deleteProduct_WhenACartContainsTheProductMultipleTimes_ShouldDeleteProductInAllOccurrencesInCarts()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2, product1));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product2));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.deleteProductById(product1.getId());
+
+        // Assert
+        assertEquals(List.of(product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void deleteProduct_WhenMultipleCartsContainTheProduct_ShouldDeleteProductInAllCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product1));
+
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product2));
+        var expectedCart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of());
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.deleteProductById(product1.getId());
+
+        // Assert
+        assertEquals(List.of(product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, expectedCart2), readTestCartData());
     }
 
     // ----------------------------
@@ -496,7 +716,7 @@ class ProductServiceTest {
         // Assert
         assertEquals(List.of(product1, product2, product3, product4), readTestProductData());
     }
-    
+
     @Test
     public void applyDiscount_WhenApplyingAZeroDiscount_ShouldIgnoreDiscount()
             throws StreamReadException, DatabindException, IOException {
@@ -509,12 +729,13 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(0.0, new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId(), product4.getId())));
+        productService.applyDiscount(0.0,
+                new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId(), product4.getId())));
 
         // Assert
         assertEquals(List.of(product1, product2, product3, product4), readTestProductData());
     }
-    
+
     @Test
     public void applyDiscount_WhenApplyingA100PercentDiscount_ShouldSetPriceToZero()
             throws StreamReadException, DatabindException, IOException {
@@ -527,7 +748,8 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(1.0, new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
+        productService.applyDiscount(1.0,
+                new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
         var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 0.0);
         var expectedProduct2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 0.0);
         var expectedProduct3 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Product 3", 0.0);
@@ -535,7 +757,7 @@ class ProductServiceTest {
         // Assert
         assertEquals(List.of(expectedProduct1, expectedProduct2, expectedProduct3, product4), readTestProductData());
     }
-    
+
     @Test
     public void applyDiscount_WhenApplyingANegativeDiscount_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
@@ -549,10 +771,11 @@ class ProductServiceTest {
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            productService.applyDiscount(-0.1, new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
+            productService.applyDiscount(-0.1,
+                    new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
         });
     }
-    
+
     @Test
     public void applyDiscount_WhenApplyingADiscountGreaterThanOne_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
@@ -566,8 +789,164 @@ class ProductServiceTest {
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            productService.applyDiscount(1.1, new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
+            productService.applyDiscount(1.1,
+                    new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
         });
+    }
+
+    @Test
+    public void applyDiscount_WhenACartContainsTheProduct_ShouldApplyDiscountToProductOnlyInCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 90.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct1, product2));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+
+        // Assert
+        assertEquals(List.of(expectedProduct1, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void applyDiscount_WhenACartContainsTheProductMultipleTimes_ShouldApplyDiscountToAllOccurrencesInCarts()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2, product1));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product2));
+
+        var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 90.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct1, product2, expectedProduct1));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+
+        // Assert
+        assertEquals(List.of(expectedProduct1, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, cart2), readTestCartData());
+    }
+
+    @Test
+    public void applyDiscount_WhenMultipleCartsContainTheProduct_ShouldApplyDiscountToAllCartsThatIncludeTheProduct()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product1));
+
+        var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 90.0);
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct1, product2));
+        var expectedCart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(expectedProduct1));
+
+        writeTestProductData(List.of(product1, product2));
+        writeTestCartData(List.of(cart1, cart2));
+
+        // Act
+        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+
+        // Assert
+        assertEquals(List.of(expectedProduct1, product2), readTestProductData());
+        assertEquals(List.of(expectedCart1, expectedCart2), readTestCartData());
+    }
+
+    @Test
+    public void applyDiscount_WhenMultipleCartsContainTheProductsMultipleTimes_ShouldApplyDiscountToAllOccurrencesInCarts()
+            throws StreamReadException, DatabindException, IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 200.0);
+        var product3 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Product 3", 300.0);
+
+        var cart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(product1, product2, product1, product3));
+        var cart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(product1, product2, product3, product3));
+        var cart3 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000003"),
+                UUID.fromString("00000000-0000-0000-0000-000000000003"),
+                List.of(product2));
+        var cart4 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000004"),
+                UUID.fromString("00000000-0000-0000-0000-000000000004"),
+                List.of(product1, product3, product3));
+
+        var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 90.0);
+        var expectedProduct3 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Product 3", 270.0);
+
+        var expectedCart1 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                List.of(expectedProduct1, product2, expectedProduct1, expectedProduct3));
+        var expectedCart2 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                UUID.fromString("00000000-0000-0000-0000-000000000002"),
+                List.of(expectedProduct1, product2, expectedProduct3, expectedProduct3));
+        var expectedCart4 = new Cart(
+                UUID.fromString("00000000-0000-0000-0000-000000000004"),
+                UUID.fromString("00000000-0000-0000-0000-000000000004"),
+                List.of(expectedProduct1, expectedProduct3, expectedProduct3));
+
+        writeTestProductData(List.of(product1, product2, product3));
+        writeTestCartData(List.of(cart1, cart2, cart3, cart4));
+
+        // Act
+        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId(), product3.getId())));
+
+        // Assert
+        assertEquals(List.of(expectedProduct1, product2, expectedProduct3), readTestProductData());
+        assertEquals(List.of(expectedCart1, expectedCart2, cart3, expectedCart4), readTestCartData());
     }
 
     // ----------------------------
@@ -575,16 +954,29 @@ class ProductServiceTest {
     // ----------------------------
 
     private List<Product> readTestProductData() throws StreamReadException, DatabindException, IOException {
-        return objectMapper.readValue(getTestDataFilePath().toFile(), new TypeReference<List<Product>>() {
+        return objectMapper.readValue(getProductsTestDataFilePath().toFile(), new TypeReference<List<Product>>() {
+        });
+    }
+
+    private List<Cart> readTestCartData() throws StreamReadException, DatabindException, IOException {
+        return objectMapper.readValue(getCartsTestDataFilePath().toFile(), new TypeReference<List<Cart>>() {
         });
     }
 
     private void writeTestProductData(List<Product> products) throws IOException {
-        objectMapper.writeValue(getTestDataFilePath().toFile(), products);
+        objectMapper.writeValue(getProductsTestDataFilePath().toFile(), products);
     }
 
-    private Path getTestDataFilePath() {
+    private void writeTestCartData(List<Cart> carts) throws IOException {
+        objectMapper.writeValue(getCartsTestDataFilePath().toFile(), carts);
+    }
+
+    private Path getProductsTestDataFilePath() {
         return tempDir.resolve("products.json");
+    }
+
+    private Path getCartsTestDataFilePath() {
+        return tempDir.resolve("carts.json");
     }
 
 }
