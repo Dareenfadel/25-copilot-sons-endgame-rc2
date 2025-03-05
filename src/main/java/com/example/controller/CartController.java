@@ -21,28 +21,38 @@ public class CartController {
     }
 
     @PostMapping("/")
-    public Cart addCart(@RequestBody Cart cart){
+    public Cart addCart(@RequestBody Cart cart) {
         return cartService.addCart(cart);
     }
 
     @GetMapping("/")
-    public ArrayList<Cart> getCarts(){
+    public ArrayList<Cart> getCarts() {
         return cartService.getCarts();
     }
 
     @GetMapping("/{cartId}")
-    public Cart getCartById(@PathVariable UUID cartId){
+    public Cart getCartById(@PathVariable UUID cartId) {
         return cartService.getCartById(cartId);
     }
 
     @PutMapping("/addProduct/{cartId}")
-    public String addProductToCart(@PathVariable UUID cartId, @RequestBody Product product){
-        return cartService.addProductToCart(cartId, product);
+    public String addProductToCart(@PathVariable UUID cartId, @RequestBody Product product) {
+        try {
+            cartService.addProductToCart(cartId, product);
+            return (product.getName() + " added to the cart");
+        } catch (Exception e) {
+            return (e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{cartId}")
-    public String deleteCartById(@PathVariable UUID cartId){
-        return cartService.deleteCartById(cartId);
+    public String deleteCartById(@PathVariable UUID cartId) {
+        try {
+            cartService.deleteCartById(cartId);
+            return ("Cart with id " + cartId + " deleted");
+        } catch (Exception e) {
+            return (e.getMessage());
+        }
     }
 
 }
