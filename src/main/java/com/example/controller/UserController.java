@@ -1,6 +1,9 @@
 package com.example.controller;
 import com.example.model.Order;
+import com.example.model.Product;
 import com.example.model.User;
+import com.example.service.CartService;
+import com.example.service.ProductService;
 import com.example.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -13,13 +16,15 @@ import java.util.UUID;
 @RequestMapping("/user")
 public class UserController {
 
-    //The Dependency Injection Variables
     private UserService userService;
+    private ProductService productService;
+    private CartService cartService;
 
-    //The Constructor with the requried variables mapping the Dependency Injection.
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService , ProductService productService, CartService cartService) {
         this.userService = userService;
+        this.productService = productService;
+        this.cartService = cartService;
     }
 
     @PostMapping("/")
@@ -49,29 +54,54 @@ public class UserController {
 
     @PostMapping("/{userId}/removeOrder")
     public String removeOrderFromUser(@PathVariable UUID userId, @RequestParam UUID orderId){
-        return userService.removeOrderFromUser(userId, orderId);
+         try {
+             userService.removeOrderFromUser(userId, orderId);
+             return ("Order removed");
+         } catch (Exception e) {
+             return(e.getMessage());
+         }
     }
 
     @DeleteMapping("/{userId}/emptyCart")
     public String emptyCart(@PathVariable UUID userId){
-        return userService.emptyCart(userId);
+        try{
+            userService.emptyCart(userId);
+            return("Cart emptied");
+        } catch (Exception e) {
+            return(e.getMessage());
+        }
     }
 
-    //TODO: Add addProductToCart in UserService
     @PutMapping("/addProductToCart")
     public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId){
-        return userService.addProductToCart(userId, productId);
+        Product product = productService.getProductById(productId);
+        try {
+            cartService.addProductToCart(userId, product);
+            return(product.getName()+ " added to the cart");
+        } catch (Exception e) {
+            return(e.getMessage());
+        }
     }
 
-    //TODO: Add deleteProductFromCart in UserService
     @PutMapping("/deleteProductFromCart")
     public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId){
-        return userService.deleteProductFromCart(userId, productId);
+        Product product = productService.getProductById(productId);
+        try {
+            cartService.deleteProductFromCart(userId, product);
+            return(product.getName()+ " removed from the cart");
+        } catch (Exception e) {
+            return(e.getMessage());
+        }
     }
 
     @DeleteMapping("/delete/{userId}")
     public String deleteUserById(@PathVariable UUID userId){
-        return userService.deleteUserById(userId);
+        try{
+            userService.deleteUserById(userId);
+            return("User deleted");
+        } catch (Exception e) {
+            return(e.getMessage());
+        }
     }
 
 }
