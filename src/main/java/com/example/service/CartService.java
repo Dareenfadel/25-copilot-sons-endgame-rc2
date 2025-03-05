@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -37,7 +38,11 @@ public class CartService extends MainService<Cart>{
 
         User user = userRepository.getUserById(cart.getUserId());
         if(user==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+            throw new NoSuchElementException("User not found!");
+        }
+        Cart existingCart = cartRepository.getCartByUserId(cart.getUserId());
+        if(existingCart!=null){
+            throw new IllegalArgumentException("Cart already exists!");
         }
         return cartRepository.addCart(cart);
     }
@@ -51,7 +56,7 @@ public class CartService extends MainService<Cart>{
     public Cart getCartByUserId(UUID userId){
         User user = userRepository.getUserById(userId);
         if(user==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found!");
+            throw new NoSuchElementException( "User not found!");
         }
         Cart cart= cartRepository.getCartByUserId(userId);
         if(cart==null)
@@ -62,7 +67,7 @@ public class CartService extends MainService<Cart>{
         //if product not exist add to products first instead of exception
         Product existingProduct = productRepository.getProductById(product.getId());
         if (existingProduct == null) {
-            productRepository.addProduct(product);
+            throw new NoSuchElementException("Product not found!");
         }
         cartRepository.addProductToCart(cartId, product);
     }
@@ -74,16 +79,16 @@ public class CartService extends MainService<Cart>{
         cartRepository.deleteProductFromCart(cartId, product);
     }
     public void deleteCartById(UUID cartId){
-        Cart cart = cartRepository.getCartById(cartId);
-        if(cart==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found!");
-        }
+//        Cart cart = cartRepository.getCartById(cartId);
+//        if(cart==null){
+//            throw new NoSuchElementException( "Cart not found!");
+//        }
         cartRepository.deleteCartById(cartId);
     }
         public Order checkoutCart(UUID userId) {
                 List<Product> cartItems = cartRepository.getCartByUserId(userId).getProducts();
                 if (cartItems.isEmpty()) {
-                        throw new IllegalStateException("Cart is empty");
+                        throw new IllegalArgumentException("Cart is empty");
                 }
                 double totalAmount = cartItems.stream()
                         .mapToDouble(Product::getPrice)
