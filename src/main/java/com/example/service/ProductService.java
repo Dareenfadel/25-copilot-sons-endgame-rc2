@@ -80,5 +80,14 @@ public class ProductService extends MainService<Product> {
 
     public void applyDiscount(double discount, ArrayList<UUID> productIds) {
         productRepository.applyDiscount(discount, productIds);
+        
+        // Cascade the discount to all carts that contain the products
+        cartRepository.updateEach((cart) -> {
+            for (var product : cart.getProducts()) {
+                if (productIds.contains(product.getId())) {
+                    product.applyDiscount(discount);
+                }
+            }
+        });
     }
 }
