@@ -9,20 +9,19 @@ import org.springframework.stereotype.Component;
 public class Cart {
     private UUID id;
     private UUID userId;
-    private List<Product> products;
+    private List<Product> products= new ArrayList<>();;
 
     public Cart() {
-        this.id = UUID.randomUUID();
-        this.products = new ArrayList<>();
     }
 
     // 2. Constructor with User ID (for creating a new cart for a user)
     public Cart(UUID userId) {
-        this.id = UUID.randomUUID();
         this.userId = userId;
-        this.products = new ArrayList<>();
     }
-
+    public Cart(UUID id, UUID userId) {
+        this.id = id;
+        this.userId = userId;
+    }
     // 3. Constructor with All Fields (Full Constructor)
     public Cart(UUID id, UUID userId, List<Product> products) {
         this.id = id;
@@ -64,4 +63,5 @@ public class Cart {
         if (!userId.equals(cart.userId)) return false;
         return products.equals(cart.products);
     }
+
 }

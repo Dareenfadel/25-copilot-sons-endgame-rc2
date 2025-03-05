@@ -27,8 +27,7 @@ public class CartRepository extends MainRepository<Cart> {
     }
     public Cart addCart(Cart cart){
 
-        save(cart);
-        return cart;
+        return create(cart);
     }
     public ArrayList<Cart> getCarts(){
         return findAll();
@@ -48,7 +47,10 @@ public class CartRepository extends MainRepository<Cart> {
     public void addProductToCart(UUID cartId, Product product){
         Cart cart = getCartById(cartId); //can I do this in service and pass it to repository?
         if(cart==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Cart not found!");
+            throw new NoSuchElementException("Cart not found!");
+        }
+        if(cart.getProducts().contains(product)){
+            throw new IllegalArgumentException("Product already exists in cart!");
         }
         //not valid cartId but when adding using userid should create cart if not exists
         cart.getProducts().add(product);
@@ -64,7 +66,7 @@ public class CartRepository extends MainRepository<Cart> {
     public void deleteProductFromCart(UUID cartId, Product product){
         Cart cart = getCartById(cartId);
         if(cart==null){
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart not found!");
+            throw new NoSuchElementException("Cart not found!");
         }
         cart.getProducts().remove(product);
         ArrayList<Cart> carts = getCarts();
