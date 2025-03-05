@@ -679,7 +679,7 @@ public class UserServiceTest {
         return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Product>>() {});
     }
     private List<Order> readTestOrderData() throws IOException {
-        return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Order>>() {});
+        return objectMapper.readValue(getTestOrderDataFilePath().toFile(), new TypeReference<List<Order>>() {});
     }
     private void writeTestUserData(List<User> users) throws IOException {
         objectMapper.writeValue(getTestDataFilePath().toFile(), users);

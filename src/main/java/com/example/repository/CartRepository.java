@@ -110,4 +110,6 @@ public class CartRepository extends MainRepository<Cart> {
     public void setIdForModel(Cart model, UUID id) {
         model.setId(id);
     }
+
+
 }
