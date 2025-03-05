@@ -59,7 +59,19 @@ public class ProductService extends MainService<Product> {
     }
 
     public void deleteProductById(UUID productId) {
+        // Delete the product from the product repository
         productRepository.deleteProductById(productId);
+
+        // Cascade the deletion to all carts that contain the product
+        cartRepository.updateEach((cart) -> {
+            var products = cart.getProducts();
+
+            for (int i = 0; i < products.size(); i++) {
+                if (products.get(i).getId().equals(productId)) {
+                    products.remove(i);
+                }
+            }
+        });
     }
 
     // ----------------------
