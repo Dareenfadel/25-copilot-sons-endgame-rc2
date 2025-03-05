@@ -153,6 +153,22 @@ public abstract class MainRepository<T> {
 
         saveAll(allData);
     }
+    
+    /**
+     * Updates all entities in the repository.
+     * 
+     * @param updateFn A consumer that defines the update operation to be performed
+     *                 on each entity in the repository.
+     */
+    public void updateEach(Consumer<T> updateFn) {
+        ArrayList<T> allData = findAll();
+
+        for (T model : allData) {
+            updateFn.accept(model);
+        }
+
+        saveAll(allData);
+    }
 
     /**
      * Deletes an entity by its ID from the repository.
