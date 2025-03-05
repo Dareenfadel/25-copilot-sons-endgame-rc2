@@ -21,28 +21,29 @@ public class OrderController {
     }
 
     @PostMapping("/")
-    public void addOrder(@RequestBody Order order){
+    public void addOrder(@RequestBody Order order) {
         orderService.addOrder(order);
     }
 
     @GetMapping("/{orderId}")
-    public Order getOrderById(@PathVariable UUID orderId){
+    public Order getOrderById(@PathVariable UUID orderId) {
         return orderService.getOrderById(orderId);
     }
 
     @GetMapping("/")
-    public ArrayList<Order> getOrders(){
+    public ArrayList<Order> getOrders() {
         return orderService.getOrders();
     }
 
     @DeleteMapping("/delete/{orderId}")
-    public String deleteOrderById(@PathVariable UUID orderId){
+    public String deleteOrderById(@PathVariable UUID orderId) {
         try {
-            return orderService.deleteOrderById(orderId);
+            orderService.deleteOrderById(orderId);
+            return "Order with id " + orderId + " deleted";
         } catch (IllegalArgumentException e) {
             return e.getMessage();
         }
     }
 
-    
+
 }

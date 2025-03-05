@@ -21,33 +21,43 @@ public class ProductController {
     }
 
     @PostMapping("/")
-    public Product addProduct(@RequestBody Product product){
+    public Product addProduct(@RequestBody Product product) {
         return productService.addProduct(product);
     }
 
     @GetMapping("/")
-    public ArrayList<Product> getProducts(){
+    public ArrayList<Product> getProducts() {
         return productService.getProducts();
     }
 
     @GetMapping("/{productId}")
-    public Product getProductById(@PathVariable UUID productId){
+    public Product getProductById(@PathVariable UUID productId) {
         return productService.getProductById(productId);
     }
 
     @PutMapping("/update/{productId}")
-    public Product updateProduct(@PathVariable UUID productId, @RequestBody Map<String,Object> body){
+    public Product updateProduct(@PathVariable UUID productId, @RequestBody Map<String, Object> body) {
         return productService.updateProduct(productId, (String) body.get("name"), (double) body.get("price"));
     }
 
     @PutMapping("/applyDiscount")
-    public String applyDiscount(@RequestParam double discount,@RequestBody ArrayList<UUID> productIds){
-        return productService.applyDiscount(discount, productIds);
+    public String applyDiscount(@RequestParam double discount, @RequestBody ArrayList<UUID> productIds) {
+        try {
+            productService.applyDiscount(discount, productIds);
+            return "Discount applied";
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
     @DeleteMapping("/delete/{productId}")
-    public String deleteProductById(@PathVariable UUID productId){
-        return productService.deleteProductById(productId);
+    public String deleteProductById(@PathVariable UUID productId) {
+        try {
+            productService.deleteProductById(productId);
+            return "Product with id " + productId + " deleted";
+        } catch (Exception e) {
+            return e.getMessage();
+        }
     }
 
 }
