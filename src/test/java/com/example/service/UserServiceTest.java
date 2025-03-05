@@ -79,7 +79,7 @@ public class UserServiceTest {
             };
             OrderService orderService = new OrderService(orderRepository);
             cartService = new CartService(cartRepository, productRepository, userRepository);
-            userService = new UserService(userRepository, cartService, orderService, new ProductService(productRepository));
+            userService = new UserService(userRepository, cartService, orderService, new ProductService(productRepository, cartRepository));
 
     }
 
@@ -705,4 +705,3 @@ public class UserServiceTest {
     }
 
 }
-
