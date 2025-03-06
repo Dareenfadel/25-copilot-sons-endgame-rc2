@@ -8,6 +8,7 @@ import com.example.repository.CartRepository;
 import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,7 +27,7 @@ public class CartService extends MainService<Cart>{
     ProductService productService;
     UserService userService;
     @Autowired
-    public CartService(CartRepository cartRepository, ProductService productService , UserService userService){
+    public CartService(CartRepository cartRepository, ProductService productService , @Lazy UserService userService){
         super(cartRepository, "Cart");
 
         this.cartRepository = cartRepository;
