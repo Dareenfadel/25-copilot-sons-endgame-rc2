@@ -18,7 +18,7 @@ public class CartRepository extends MainRepository<Cart> {
     }
     @Override
     protected String getDataPath() {
-        return DATA_DIRECTORY.resolve("carts.json").toString();
+        return "src/main/java/com/example/data/carts.json";
     }
 
     @Override

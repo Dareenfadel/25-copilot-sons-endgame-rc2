@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -316,7 +317,7 @@ public class OrderServiceTest {
         assertEquals(List.of(order1), readTestOrderData()); // Only order1 should remain
     }
     @Test
-    public void deleteOrder_WhenOrderDoesNotExist_ShouldIgnoreDeleteAndReturnNull() throws IOException {
+    public void deleteOrder_WhenOrderDoesNotExist_ShouldThrowException() throws IOException{
         // Arrange
         var userId = UUID.fromString("30000000-0000-0000-0000-000000000001");
 
@@ -325,22 +326,20 @@ public class OrderServiceTest {
 
         writeTestOrderData(List.of(order1, order2));
 
-        // Act
-        orderService.deleteOrderById(UUID.fromString("30000000-0000-0000-0000-000000000003")); // Non-existing order ID
-
-        // Assert
-        assertEquals(List.of(order1, order2), readTestOrderData()); // Nothing should change
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            orderService.deleteOrderById(UUID.fromString("30000000-0000-0000-0000-000000000003"));
+        });
     }
     @Test
-    public void deleteOrder_WhenNoOrdersExist_ShouldIgnoreDeleteAndReturnNull() throws IOException {
+    public void deleteOrder_WhenNoOrdersExist_ShouldThrowException() throws IOException {
         // Arrange
         writeTestOrderData(List.of()); // Empty order data
 
-        // Act
-        orderService.deleteOrderById(UUID.fromString("10000000-0000-0000-0000-000000000001")); // Attempt to delete from empty data
-
-        // Assert
-        assertEquals(List.of(), readTestOrderData());
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            orderService.deleteOrderById(UUID.fromString("0000000-0000-0000-0000-000000000003"));
+        });
     }
 
 

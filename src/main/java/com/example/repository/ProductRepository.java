@@ -42,8 +42,8 @@ public class ProductRepository extends MainRepository<Product> {
     // ----------------------
 
     public void applyDiscount(double discount, ArrayList<UUID> productIds) {
-        if (discount < 0 || discount > 1) {
-            throw new IllegalArgumentException("Discount must be between 0 and 1");
+        if (discount < 0 || discount > 100) {
+            throw new IllegalArgumentException("Discount must be between 0 and 100");
         }
 
         updateWhere(
@@ -67,7 +67,7 @@ public class ProductRepository extends MainRepository<Product> {
 
     @Override
     protected String getDataPath() {
-        return DATA_DIRECTORY.resolve("products.json").toString();
+        return "src/main/java/com/example/data/products.json";
     }
 
     @Override

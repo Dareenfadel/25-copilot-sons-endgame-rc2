@@ -633,7 +633,7 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(0.1, new ArrayList<>(List.of(product2.getId())));
+        productService.applyDiscount(10, new ArrayList<>(List.of(product2.getId())));
         var expectedProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 180.0);
 
         // Assert
@@ -652,7 +652,7 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(0.2, new ArrayList<>(List.of(product1.getId(), product3.getId())));
+        productService.applyDiscount(20, new ArrayList<>(List.of(product1.getId(), product3.getId())));
         var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 80.0);
         var expectedProduct3 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Product 3", 240.0);
 
@@ -691,7 +691,7 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(0.1,
+        productService.applyDiscount(10,
                 new ArrayList<>(List.of(product1.getId(), UUID.fromString("00000000-0000-0000-0000-000000000005"))));
         var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 90.0);
 
@@ -748,7 +748,7 @@ class ProductServiceTest {
         writeTestProductData(List.of(product1, product2, product3, product4));
 
         // Act
-        productService.applyDiscount(1.0,
+        productService.applyDiscount(100,
                 new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
         var expectedProduct1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 0.0);
         var expectedProduct2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 0.0);
@@ -789,7 +789,7 @@ class ProductServiceTest {
 
         // Act & Assert
         assertThrows(IllegalArgumentException.class, () -> {
-            productService.applyDiscount(1.1,
+            productService.applyDiscount(101,
                     new ArrayList<>(List.of(product1.getId(), product2.getId(), product3.getId())));
         });
     }
@@ -820,7 +820,7 @@ class ProductServiceTest {
         writeTestCartData(List.of(cart1, cart2));
 
         // Act
-        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+        productService.applyDiscount(10, new ArrayList<>(List.of(product1.getId())));
 
         // Assert
         assertEquals(List.of(expectedProduct1, product2), readTestProductData());
@@ -853,7 +853,7 @@ class ProductServiceTest {
         writeTestCartData(List.of(cart1, cart2));
 
         // Act
-        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+        productService.applyDiscount(10, new ArrayList<>(List.of(product1.getId())));
 
         // Assert
         assertEquals(List.of(expectedProduct1, product2), readTestProductData());
@@ -890,7 +890,7 @@ class ProductServiceTest {
         writeTestCartData(List.of(cart1, cart2));
 
         // Act
-        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId())));
+        productService.applyDiscount(10, new ArrayList<>(List.of(product1.getId())));
 
         // Assert
         assertEquals(List.of(expectedProduct1, product2), readTestProductData());
@@ -942,7 +942,7 @@ class ProductServiceTest {
         writeTestCartData(List.of(cart1, cart2, cart3, cart4));
 
         // Act
-        productService.applyDiscount(0.1, new ArrayList<>(List.of(product1.getId(), product3.getId())));
+        productService.applyDiscount(10, new ArrayList<>(List.of(product1.getId(), product3.getId())));
 
         // Assert
         assertEquals(List.of(expectedProduct1, product2, expectedProduct3), readTestProductData());

@@ -79,18 +79,23 @@ public class UserService extends MainService<User>{
         }
 
         //needed by the controller :)
-    public void deleteProductFromCart(UUID userId, UUID productId) {
+    public String deleteProductFromCart(UUID userId, UUID productId) {
         Cart cart= cartService.getCartByUserId(userId);
 
             if (cart == null) {
                 throw new NoSuchElementException("cart not found");
             }
+         int size= cart.getProducts().size();
+        if(cart.getProducts().size()==0){
+            return "Cart is empty";
+        }
         Product product= productService.getProductById(productId);
         if (product == null) {
             throw new NoSuchElementException("product not found");
         }
         cartService.deleteProductFromCart(cart.getId(), product);
 
+        return "Product deleted from cart";
     }
     public void addProductToCart(UUID userId, UUID productId) {
         Cart cart= cartService.getCartByUserId(userId);

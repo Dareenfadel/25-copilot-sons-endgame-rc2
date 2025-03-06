@@ -37,14 +37,15 @@ public class ProductController {
 
     @PutMapping("/update/{productId}")
     public Product updateProduct(@PathVariable UUID productId, @RequestBody Map<String, Object> body) {
-        return productService.updateProduct(productId, (String) body.get("name"), (double) body.get("price"));
+
+        return productService.updateProduct(productId, (String) body.get("newName"), (double)body.get("newPrice"));
     }
 
     @PutMapping("/applyDiscount")
     public String applyDiscount(@RequestParam double discount, @RequestBody ArrayList<UUID> productIds) {
         try {
             productService.applyDiscount(discount, productIds);
-            return "Discount applied";
+            return "Discount applied successfully";
         } catch (Exception e) {
             return e.getMessage();
         }
@@ -54,7 +55,7 @@ public class ProductController {
     public String deleteProductById(@PathVariable UUID productId) {
         try {
             productService.deleteProductById(productId);
-            return "Product with id " + productId + " deleted";
+            return "Product deleted successfully";
         } catch (Exception e) {
             return e.getMessage();
         }

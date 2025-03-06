@@ -52,7 +52,7 @@ public class UserRepository extends MainRepository<User> {
 
     @Override
     protected String getDataPath() {
-        return "data/users.json";
+        return "src/main/java/com/example/data/users.json";
     }
 
     @Override
