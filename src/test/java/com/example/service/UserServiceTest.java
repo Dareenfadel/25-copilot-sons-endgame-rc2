@@ -5,21 +5,12 @@ import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.Product;
 import com.example.model.User;
-import com.example.repository.CartRepository;
-import com.example.repository.OrderRepository;
-import com.example.repository.ProductRepository;
-import com.example.repository.UserRepository;
 import com.example.utils.TestUtils;
 import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,66 +19,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class UserServiceTest {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @TempDir
-    private Path userTempDir;
-
-    @TempDir
-    private Path cartTempDir;
-
-    @TempDir
-    private Path productTempDir;
-    @TempDir
-    private Path orderTempDir;
-
-
-    private  UserRepository userRepository;
-    private  UserService userService;
-    private  CartService cartService;
-    private  ProductService productService;
-
-
-    public UserServiceTest() {
-
-            CartRepository cartRepository = new CartRepository(){
-                @Override
-                protected String getDataPath() {
-                    return getTestCartDataFilePath().toString();
-                }
-            };
-            ProductRepository productRepository = new ProductRepository(){
-                @Override
-                protected String getDataPath() {
-                    return getTestProductDataFilePath().toString();
-                }
-            };
-           //create order repository
-            OrderRepository orderRepository = new OrderRepository(){
-                @Override
-                protected String getDataPath() {
-                    return getTestOrderDataFilePath().toString();
-                }
-            };
-
-
-            userRepository = new UserRepository() {
-                @Override
-                protected String getDataPath() {
-                    return getTestDataFilePath().toString();
-                }
-            };
-            OrderService orderService = new OrderService(orderRepository);
-           productService= new ProductService(productRepository, cartRepository);
-           cartService = new CartService(cartRepository,productService, null);
-           userService = new UserService(userRepository, cartService, orderService, productService);
-           cartService.setUserService(userService);
-
-
-
-    }
-
+public class UserServiceTest extends ServiceTest {
 
     //---------------------------
     //ADD NEW User TEST
@@ -181,7 +113,7 @@ public class UserServiceTest {
     public void getUsers_WhenDataFileExistsButContainsInvalidJsonSyntax_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath(), "invalid json");
+        Files.writeString(getTestUserDataFilePath(), "invalid json");
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -192,7 +124,7 @@ public class UserServiceTest {
     public void getUsers_WhenDataFileContainsInvalidUserData_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath(), """
+        Files.writeString(getTestUserDataFilePath(), """
                         [
                             {
                                 "id": "00000000-0000-0000-0000-000000000001",
@@ -657,52 +589,6 @@ public class UserServiceTest {
         assertTrue(orders.size() == 1);
         assertEquals(10.0, orders.get(0).getTotalPrice());
         assertTrue(cartService.getCartByUserId(UUID.fromString("00000000-0000-0000-0000-000000000001")).getProducts().isEmpty());
-    }
-
-
-
-
-
-
-
-
-
-    // ----------------------------
-    // Helper methods
-    // ----------------------------
-    private List<User> readTestUserData() throws IOException {
-        return objectMapper.readValue(getTestDataFilePath().toFile(), new TypeReference<List<User>>() {});
-    }
-    private List<Cart> readTestCartData() throws IOException {
-        return objectMapper.readValue(getTestCartDataFilePath().toFile(), new TypeReference<List<Cart>>() {});
-    }
-    private List<Product> readTestProductData() throws IOException {
-        return objectMapper.readValue(getTestProductDataFilePath().toFile(), new TypeReference<List<Product>>() {});
-    }
-    private List<Order> readTestOrderData() throws IOException {
-        return objectMapper.readValue(getTestOrderDataFilePath().toFile(), new TypeReference<List<Order>>() {});
-    }
-    private void writeTestUserData(List<User> users) throws IOException {
-        objectMapper.writeValue(getTestDataFilePath().toFile(), users);
-    }
-    private void writeTestCartData(List<Cart> carts) throws IOException {
-        objectMapper.writeValue(getTestCartDataFilePath().toFile(), carts);
-    }
-    private void writeTestProductData(List<Product> products) throws IOException {
-        objectMapper.writeValue(getTestProductDataFilePath().toFile(), products);
-    }
-
-    private Path getTestDataFilePath() {
-        return userTempDir.resolve("users.json");
-    }
-    private Path getTestCartDataFilePath() {
-        return cartTempDir.resolve("carts.json");
-    }
-    private Path getTestProductDataFilePath() {
-        return productTempDir.resolve("products.json");
-    }
-    private Path getTestOrderDataFilePath() {
-        return orderTempDir.resolve("orders.json");
     }
 
 }

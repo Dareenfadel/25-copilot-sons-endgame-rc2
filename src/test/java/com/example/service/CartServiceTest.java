@@ -2,82 +2,22 @@ package com.example.service;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import com.example.model.Cart;
-import com.example.model.Order;
 import com.example.model.User;
-import com.example.repository.CartRepository;
-import com.example.repository.OrderRepository;
-import com.example.repository.ProductRepository;
-import com.example.repository.UserRepository;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 import com.example.model.Product;
 
 import com.example.utils.TestUtils;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import static org.junit.jupiter.api.Assertions.*;
 //cart service test cases
-public class CartServiceTest {
-    // ----------------------------
-    // Test setup
-    // ----------------------------
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @TempDir
-    private Path tempDir;  // JUnit initializes this before test methods, not before constructor
-
-
-    private CartService cartService;
-    private UserService userService;
-    private ProductService productService;
-
-    @BeforeEach
-    public void setUp() {
-     ProductRepository productRepository = new ProductRepository() {
-            @Override
-            protected String getDataPath() {
-                return getTestDataFilePath("products.json").toString();
-            }
-        };
-
-      CartRepository  cartRepository = new CartRepository() {
-            @Override
-            protected String getDataPath() {
-                return getTestDataFilePath("carts.json").toString();
-            }
-        };
-
-       UserRepository userRepository = new UserRepository() {
-            @Override
-            protected String getDataPath() {
-                return getTestDataFilePath("users.json").toString();
-            }
-        };
-
-
-        // Initialize services
-        productService = new ProductService(productRepository, cartRepository);
-        cartService = new CartService(cartRepository, productService, null);
-        userService = new UserService(userRepository,cartService,new OrderService(new OrderRepository()), productService);
-        cartService.setUserService(userService);
-
-
-
-
-    }
-
+public class CartServiceTest extends ServiceTest {
     // --------------------------
     // Tests
     // --------------------------
@@ -296,7 +236,7 @@ public class CartServiceTest {
     public void getCarts_WhenDataFileExistsButContainsInvalidJsonSyntax_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath("carts.json"), "invalid json");
+        Files.writeString(getTestCartDataFilePath(), "invalid json");
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -307,7 +247,7 @@ public class CartServiceTest {
     public void getCarts_WhenDataFileContainsInvalidCartData_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getTestDataFilePath("carts.json"), """
+        Files.writeString(getTestCartDataFilePath(), """
                         [
                             {
                                 "id": "00000000-0000-0000-0000-000000000001",
@@ -687,22 +627,5 @@ public class CartServiceTest {
         assertThrows(NoSuchElementException.class, () -> {
             cartService.deleteCartById(nonExistentCartId);
         });
-    }
-
-
-    // ----------------------------
-    // Helper Methods
-    // ----------------------------
-
-    private List<Cart> readTestCartData() throws IOException {
-        return objectMapper.readValue(getTestDataFilePath("carts.json").toFile(), new TypeReference<List<Cart>>() {});
-    }
-
-    private void writeTestCartData(List<Cart> carts) throws IOException {
-        objectMapper.writeValue(getTestDataFilePath("carts.json").toFile(), carts);
-    }
-
-    private Path getTestDataFilePath(String fileName) {
-        return tempDir.resolve(fileName);
     }
 }

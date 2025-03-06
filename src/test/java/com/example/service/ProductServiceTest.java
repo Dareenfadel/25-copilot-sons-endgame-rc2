@@ -5,57 +5,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
 import com.example.model.Cart;
 import com.example.model.Product;
-import com.example.repository.CartRepository;
-import com.example.repository.ProductRepository;
 import com.example.utils.TestUtils;
 import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DatabindException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-class ProductServiceTest {
-
-    // ----------------------------
-    // Test setup
-    // ----------------------------
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
-
-    @TempDir
-    private Path tempDir;
-
-    private final ProductRepository productRepository;
-    private final CartRepository cartRepository;
-
-    private final ProductService productService;
-
-    public ProductServiceTest() {
-        productRepository = new ProductRepository() {
-            @Override
-            protected String getDataPath() {
-                return getProductsTestDataFilePath().toString();
-            }
-        };
-        cartRepository = new CartRepository() {
-            @Override
-            protected String getDataPath() {
-                return getCartsTestDataFilePath().toString();
-            }
-        };
-        productService = new ProductService(productRepository, cartRepository);
-    }
-
+class ProductServiceTest extends ServiceTest {
     // ----------------------------
     // Tests
     // ----------------------------
@@ -182,7 +144,7 @@ class ProductServiceTest {
     public void getProducts_WhenDataFileExistsButContainsInvalidJsonSyntax_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getProductsTestDataFilePath(), "invalid json");
+        Files.writeString(getTestProductDataFilePath(), "invalid json");
 
         // Act & Assert
         assertThrows(RuntimeException.class, () -> {
@@ -194,7 +156,7 @@ class ProductServiceTest {
     public void getProducts_WhenDataFileContainsInvalidProductData_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
-        Files.writeString(getProductsTestDataFilePath(), """
+        Files.writeString(getTestProductDataFilePath(), """
                         [
                             {
                                 "id": "00000000-0000-0000-0000-000000000001",
@@ -505,8 +467,7 @@ class ProductServiceTest {
     }
 
     @Test
-    public void deleteProduct_WhenNoProductsExist_ShouldThrowException()
-    {
+    public void deleteProduct_WhenNoProductsExist_ShouldThrowException() {
         // Arrange
 
         // Act & Assert
@@ -946,35 +907,4 @@ class ProductServiceTest {
         assertEquals(List.of(expectedProduct1, product2, expectedProduct3), readTestProductData());
         assertEquals(List.of(expectedCart1, expectedCart2, cart3, expectedCart4), readTestCartData());
     }
-
-    // ----------------------------
-    // Helper methods
-    // ----------------------------
-
-    private List<Product> readTestProductData() throws StreamReadException, DatabindException, IOException {
-        return objectMapper.readValue(getProductsTestDataFilePath().toFile(), new TypeReference<List<Product>>() {
-        });
-    }
-
-    private List<Cart> readTestCartData() throws StreamReadException, DatabindException, IOException {
-        return objectMapper.readValue(getCartsTestDataFilePath().toFile(), new TypeReference<List<Cart>>() {
-        });
-    }
-
-    private void writeTestProductData(List<Product> products) throws IOException {
-        objectMapper.writeValue(getProductsTestDataFilePath().toFile(), products);
-    }
-
-    private void writeTestCartData(List<Cart> carts) throws IOException {
-        objectMapper.writeValue(getCartsTestDataFilePath().toFile(), carts);
-    }
-
-    private Path getProductsTestDataFilePath() {
-        return tempDir.resolve("products.json");
-    }
-
-    private Path getCartsTestDataFilePath() {
-        return tempDir.resolve("carts.json");
-    }
-
 }
