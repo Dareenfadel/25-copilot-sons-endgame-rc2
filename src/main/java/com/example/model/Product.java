@@ -34,7 +34,7 @@ public class Product {
     // Business Logic
     // ----------------------
     public void applyDiscount(double discount) {
-        this.price *= (1 - discount);
+        this.price= this.price - (this.price * discount / 100);
     }
 
     // ----------------------

@@ -52,7 +52,7 @@ public class UserController {
     public String addOrderToUser(@PathVariable UUID userId) {
         try {
             userService.addOrderToUser(userId);
-            return ("Order added");
+            return ("Order added successfully");
         } catch (Exception e) {
             return (e.getMessage());
         }
@@ -62,7 +62,7 @@ public class UserController {
     public String removeOrderFromUser(@PathVariable UUID userId, @RequestParam UUID orderId) {
         try {
             userService.removeOrderFromUser(userId, orderId);
-            return ("Order removed");
+            return ("Order removed successfully");
         } catch (Exception e) {
             return (e.getMessage());
         }
@@ -72,7 +72,7 @@ public class UserController {
     public String emptyCart(@PathVariable UUID userId) {
         try {
             userService.emptyCart(userId);
-            return ("Cart emptied");
+            return ("Cart emptied successfully");
         } catch (Exception e) {
             return (e.getMessage());
         }
@@ -82,8 +82,8 @@ public class UserController {
     public String addProductToCart(@RequestParam UUID userId, @RequestParam UUID productId) {
         Product product = productService.getProductById(productId);
         try {
-            cartService.addProductToCart(userId, product);
-            return (product.getName() + " added to the cart");
+            userService.addProductToCart(userId, productId);
+            return ("Product added to cart");
         } catch (Exception e) {
             return (e.getMessage());
         }
@@ -93,8 +93,8 @@ public class UserController {
     public String deleteProductFromCart(@RequestParam UUID userId, @RequestParam UUID productId) {
         Product product = productService.getProductById(productId);
         try {
-            cartService.deleteProductFromCart(userId, product);
-            return (product.getName() + " removed from the cart");
+             return  userService.deleteProductFromCart(userId, productId);
+
         } catch (Exception e) {
             return (e.getMessage());
         }
@@ -104,7 +104,7 @@ public class UserController {
     public String deleteUserById(@PathVariable UUID userId) {
         try {
             userService.deleteUserById(userId);
-            return ("User deleted");
+            return ("User deleted successfully");
         } catch (Exception e) {
             return (e.getMessage());
         }

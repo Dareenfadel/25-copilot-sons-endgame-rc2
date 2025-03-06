@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @RestController
@@ -39,8 +40,8 @@ public class OrderController {
     public String deleteOrderById(@PathVariable UUID orderId) {
         try {
             orderService.deleteOrderById(orderId);
-            return "Order with id " + orderId + " deleted";
-        } catch (IllegalArgumentException e) {
+            return "Order deleted successfully";
+        } catch (NoSuchElementException e) {
             return e.getMessage();
         }
     }

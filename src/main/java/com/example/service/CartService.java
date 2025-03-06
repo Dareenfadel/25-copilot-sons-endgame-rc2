@@ -38,7 +38,7 @@ public class CartService extends MainService<Cart>{
 
         User user = userRepository.getUserById(cart.getUserId());
         if(user==null){
-            throw new NoSuchElementException("User not found!");
+            throw new NoSuchElementException("User not found");
         }
         Cart existingCart = cartRepository.getCartByUserId(cart.getUserId());
         if(existingCart!=null){
@@ -56,7 +56,7 @@ public class CartService extends MainService<Cart>{
     public Cart getCartByUserId(UUID userId){
         User user = userRepository.getUserById(userId);
         if(user==null){
-            throw new NoSuchElementException( "User not found!");
+            throw new NoSuchElementException( "User not found");
         }
         Cart cart= cartRepository.getCartByUserId(userId);
         if(cart==null)

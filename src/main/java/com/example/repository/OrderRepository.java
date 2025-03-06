@@ -6,6 +6,7 @@ import com.example.model.User;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Repository
@@ -16,7 +17,7 @@ public class OrderRepository extends MainRepository<Order>{
 
     @Override
     protected String getDataPath() {
-        return DATA_DIRECTORY.resolve("orders.json").toString();
+        return "src/main/java/com/example/data/orders.json";
     }
 
     @Override
@@ -35,6 +36,10 @@ public class OrderRepository extends MainRepository<Order>{
        return findById(orderId);
     }
     public void deleteOrderById(UUID orderId){
+        Order order=getOrderById(orderId);
+        if(order==null){
+            throw new NoSuchElementException("Order not found");
+        }
         deleteById(orderId);
     }
 
