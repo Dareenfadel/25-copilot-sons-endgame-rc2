@@ -3,6 +3,8 @@ package com.example.repository;
 import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.User;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import java.util.ArrayList;
@@ -12,12 +14,15 @@ import java.util.UUID;
 @Repository
 public class OrderRepository extends MainRepository<Order>{
 
+    @Value("${spring.application.orderDataPath}")
+    private String dataPath;
+    
     public OrderRepository() {
     }
 
     @Override
     protected String getDataPath() {
-        return "src/main/java/com/example/data/orders.json";
+        return dataPath;
     }
 
     @Override
