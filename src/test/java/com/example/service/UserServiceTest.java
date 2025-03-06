@@ -43,9 +43,10 @@ public class UserServiceTest {
     private Path orderTempDir;
 
 
-    private final UserRepository userRepository;
-    private final UserService userService;
-    private final CartService cartService;
+    private  UserRepository userRepository;
+    private  UserService userService;
+    private  CartService cartService;
+    private  ProductService productService;
 
 
     public UserServiceTest() {
@@ -78,10 +79,15 @@ public class UserServiceTest {
                 }
             };
             OrderService orderService = new OrderService(orderRepository);
-            cartService = new CartService(cartRepository, productRepository, userRepository);
-            userService = new UserService(userRepository, cartService, orderService, new ProductService(productRepository, cartRepository));
+           productService= new ProductService(productRepository, cartRepository);
+           cartService = new CartService(cartRepository,productService, null);
+           userService = new UserService(userRepository, cartService, orderService, productService);
+           cartService.setUserService(userService);
+
+
 
     }
+
 
     //---------------------------
     //ADD NEW User TEST

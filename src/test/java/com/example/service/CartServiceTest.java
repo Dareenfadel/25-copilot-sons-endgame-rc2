@@ -12,6 +12,8 @@ import com.example.model.Cart;
 import com.example.model.Order;
 import com.example.model.User;
 import com.example.repository.CartRepository;
+import com.example.repository.OrderRepository;
+import com.example.repository.ProductRepository;
 import com.example.repository.UserRepository;
 import com.fasterxml.jackson.core.exc.StreamReadException;
 import com.fasterxml.jackson.databind.DatabindException;
@@ -19,7 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import com.example.model.Product;
-import com.example.repository.ProductRepository;
+
 import com.example.utils.TestUtils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,35 +38,42 @@ public class CartServiceTest {
     @TempDir
     private Path tempDir;  // JUnit initializes this before test methods, not before constructor
 
-    private CartRepository cartRepository;
-    private ProductRepository productRepository;
-    private UserRepository userRepository;
+
     private CartService cartService;
+    private UserService userService;
+    private ProductService productService;
 
     @BeforeEach
     public void setUp() {
-        productRepository = new ProductRepository() {
+     ProductRepository productRepository = new ProductRepository() {
             @Override
             protected String getDataPath() {
                 return getTestDataFilePath("products.json").toString();
             }
         };
 
-        cartRepository = new CartRepository() {
+      CartRepository  cartRepository = new CartRepository() {
             @Override
             protected String getDataPath() {
                 return getTestDataFilePath("carts.json").toString();
             }
         };
 
-        userRepository = new UserRepository() {
+       UserRepository userRepository = new UserRepository() {
             @Override
             protected String getDataPath() {
                 return getTestDataFilePath("users.json").toString();
             }
         };
 
-        cartService = new CartService(cartRepository, productRepository, userRepository);
+
+        // Initialize services
+        productService = new ProductService(productRepository, cartRepository);
+        cartService = new CartService(cartRepository, productService, null);
+        userService = new UserService(userRepository,cartService,new OrderService(new OrderRepository()), productService);
+        cartService.setUserService(userService);
+
+
 
 
     }
@@ -80,7 +89,7 @@ public class CartServiceTest {
     public void addCart_WhenUserAlreadyHasCart_ShouldThrowException() throws IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
 
         var existingCart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user1.getId());
         writeTestCartData(List.of(existingCart)); // Ensure cart already exists
@@ -95,7 +104,7 @@ public class CartServiceTest {
     public void addCart_WhenUserHasNoCart_ShouldCreateNewCart() throws IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
 
         var uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000002"); // Random ID for new cart
         Cart newCart = new Cart(user1.getId()); // Cart with no predefined ID
@@ -124,8 +133,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
 
         Cart cart1 = new Cart(user1.getId());
         Cart cart2 = new Cart(user2.getId());
@@ -157,8 +166,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
 
         Cart cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         Cart cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
@@ -181,8 +190,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
 
         var existingCart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var newCart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user2.getId());
@@ -206,7 +215,7 @@ public class CartServiceTest {
     public void addCart_WhenUserIdIsValid_ShouldReturnCartWithGivenUserId() throws IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
 
         var uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
@@ -242,8 +251,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
         Cart cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         Cart cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
 
@@ -326,8 +335,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
 
@@ -349,8 +358,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
 
@@ -397,9 +406,9 @@ public class CartServiceTest {
         User user3 = new User(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Test User3", new ArrayList<>());
 
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
-        userRepository.addUser(user3);
+        userService.addUser(user1);
+        userService.addUser(user2);
+        userService.addUser(user3);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
         var cart3 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user3.getId());
@@ -433,7 +442,7 @@ public class CartServiceTest {
     public void getCartByUserId_WhenUserHasNoCart_ShouldCreateNewCart() throws IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
 
         var uuid1 = UUID.fromString("00000000-0000-0000-0000-000000000001");
 
@@ -458,7 +467,7 @@ public class CartServiceTest {
     public void getCartByUserId_WhenUserHasCart_ShouldReturnCart() throws IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
 
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         writeTestCartData(List.of(cart1));
@@ -479,7 +488,7 @@ public class CartServiceTest {
     public void addProductToCart_WhenProductDoesNotExist_ShouldThrowException() {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
-        userRepository.addUser(user1);
+        userService.addUser(user1);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         Product nonExistentProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000999"), "Nonexistent Product", 100.0);
 
@@ -495,7 +504,7 @@ public class CartServiceTest {
         UUID nonExistentCartId = UUID.fromString("00000000-0000-0000-0000-000000000999");
         Product product = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test Product", 50.0);
 
-        productRepository.addProduct(product); // Ensure the product exists
+        productService.addProduct(product); // Ensure the product exists
 
         // Act & Assert
         assertThrows(NoSuchElementException.class, () -> {
@@ -507,14 +516,14 @@ public class CartServiceTest {
     public void addProductToCart_WhenCartAndProductExist_ShouldAddProduct() throws IOException {
         // Arrange
         User user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User", new ArrayList<>());
-        userRepository.addUser(user);
+        userService.addUser(user);
 
         UUID cartId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         Cart cart = new Cart(cartId, user.getId());
         writeTestCartData(List.of(cart)); // Ensure cart exists in the JSON file
 
         Product product = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test Product", 50.0);
-        productRepository.addProduct(product); // Ensure product exists
+        productService.addProduct(product); // Ensure product exists
 
         // Act
         cartService.addProductToCart(cartId, product);
@@ -528,13 +537,13 @@ public class CartServiceTest {
     public void addProductToCart_WhenProductAlreadyInCart_ShouldThrowException() throws IOException {
         // Arrange
         User user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User", new ArrayList<>());
-        userRepository.addUser(user);
+        userService.addUser(user);
 
         UUID cartId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         Cart cart = new Cart(cartId, user.getId());
 
         Product product = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test Product", 50.0);
-        productRepository.addProduct(product);
+        productService.addProduct(product);
 
         // Add product once
         cart.getProducts().add(product);
@@ -564,7 +573,7 @@ public class CartServiceTest {
     public void deleteProductFromCart_WhenProductNotInCart_ShouldDoNothing() throws IOException {
         // Arrange
         User user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User", new ArrayList<>());
-        userRepository.addUser(user);
+        userService.addUser(user);
 
         UUID cartId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         Cart cart = new Cart(cartId, user.getId());
@@ -584,11 +593,11 @@ public class CartServiceTest {
     public void deleteProductFromCart_WhenProductInCart_ShouldRemoveProduct() throws IOException {
         // Arrange
         User user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User", new ArrayList<>());
-        userRepository.addUser(user);
+        userService.addUser(user);
 
         UUID cartId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         Product product = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test Product", 50.0);
-        productRepository.addProduct(product);
+        productService.addProduct(product);
 
         Cart cart = new Cart(cartId, user.getId());
         cart.getProducts().add(product);
@@ -605,7 +614,7 @@ public class CartServiceTest {
     public void deleteProductFromCart_WhenProductDoesNotExist_ShouldDoNothing() throws IOException {
         // Arrange
         User user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User", new ArrayList<>());
-        userRepository.addUser(user);
+        userService.addUser(user);
 
         UUID cartId = UUID.fromString("00000000-0000-0000-0000-000000000001");
         Cart cart = new Cart(cartId, user.getId());
@@ -613,7 +622,7 @@ public class CartServiceTest {
         Product existingProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Existing Product", 50.0);
         Product nonExistentProduct = new Product(UUID.fromString("00000000-0000-0000-0000-000000000003"), "Non-Existent Product", 60.0);
 
-        productRepository.addProduct(existingProduct);
+        productService.addProduct(existingProduct);
         cart.getProducts().add(existingProduct); // Cart has one product
         writeTestCartData(List.of(cart)); // Save the cart with only the existing product
 
@@ -636,8 +645,8 @@ public class CartServiceTest {
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
 
@@ -649,39 +658,35 @@ public class CartServiceTest {
         // Assert
         assertEquals(List.of(cart1), readTestCartData());
     }
-
-    @Test
-    public void deleteCart_WhenProductDoesNotExist_ShouldIgnoreDeleteAndReturnNull()
+      @Test
+    public void deleteCart_WhenCartDoesNotExist_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
         User user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Test User1", new ArrayList<>());
         User user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Test User2", new ArrayList<>());
 
-        userRepository.addUser(user1);
-        userRepository.addUser(user2);
+        userService.addUser(user1);
+        userService.addUser(user2);
         var cart1 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), user1.getId());
         var cart2 = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000002"), user2.getId());
 
         writeTestCartData(List.of(cart1, cart2));
 
-        // Act
-        cartService.deleteCartById(UUID.fromString("00000000-0000-0000-0000-000000000003"));
-
-        // Assert
-        assertEquals(List.of(cart1, cart2), readTestCartData());
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            cartService.deleteCartById(UUID.fromString("00000000-0000-0000-0000-000000000003"));
+        });
     }
 
     @Test
-    public void deleteCart_WhenNoCartsExist_ShouldIgnoreDeleteAndReturnNull()
-            throws StreamReadException, DatabindException, IOException {
+    public void deleteCart_WhenNoCartsExist_ShouldThrowException(){
         // Arrange
-        writeTestCartData(List.of());
+        UUID nonExistentCartId = UUID.fromString("00000000-0000-0000-0000-000000000999");
 
-        // Act
-        cartService.deleteCartById(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-
-        // Assert
-        assertEquals(List.of(), readTestCartData());
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            cartService.deleteCartById(nonExistentCartId);
+        });
     }
 
 
