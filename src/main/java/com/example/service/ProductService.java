@@ -3,10 +3,10 @@ package com.example.service;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.example.model.Product;
-import com.example.repository.CartRepository;
 import com.example.repository.ProductRepository;
 
 @Service
@@ -16,13 +16,13 @@ public class ProductService extends MainService<Product> {
     // Dependency Injection & Constructor
     // ----------------------
 
-    private final ProductRepository productRepository;
-    private final CartRepository cartRepository;
-
-    public ProductService(ProductRepository productRepository, CartRepository cartRepository) {
+    private ProductRepository productRepository;
+    private CartService cartService;
+    
+    public ProductService(ProductRepository productRepository, CartService cartService) {
         super(productRepository, "Product");
         this.productRepository = productRepository;
-        this.cartRepository = cartRepository;
+        this.cartService = cartService;
     }
 
     // ----------------------
@@ -46,7 +46,7 @@ public class ProductService extends MainService<Product> {
         var newProduct = productRepository.updateProduct(productId, newName, newPrice);
 
         // Cascade the update to all carts that contain the product
-        productRepository.cascadeUpdate(cartRepository, newProduct, (cart) -> cart.getProducts());
+        cartService.updateEach((cart) -> replaceModelsInList(cart.getProducts(), newProduct));
 
         return newProduct;
     }
@@ -56,7 +56,7 @@ public class ProductService extends MainService<Product> {
         productRepository.deleteProductById(productId);
 
         // Cascade the deletion to all carts that contain the product
-        productRepository.cascadeDelete(cartRepository, productId, (cart) -> cart.getProducts());
+        cartService.updateEach((cart) -> deleteModelFromListById(cart.getProducts(), productId));
     }
 
     // ----------------------
@@ -67,12 +67,20 @@ public class ProductService extends MainService<Product> {
         productRepository.applyDiscount(discount, productIds);
 
         // Cascade the discount to all carts that contain the products
-        cartRepository.updateEach((cart) -> {
+        cartService.updateEach((cart) -> {
             for (var product : cart.getProducts()) {
                 if (productIds.contains(product.getId())) {
                     product.applyDiscount(discount);
                 }
             }
         });
+    }
+
+    // ----------------------
+    // Getters & Setters
+    // ----------------------
+    @Autowired
+    public void setCartService(CartService cartService) {
+        this.cartService = cartService;
     }
 }

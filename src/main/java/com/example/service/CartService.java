@@ -27,7 +27,7 @@ public class CartService extends MainService<Cart>{
     ProductService productService;
     UserService userService;
     @Autowired
-    public CartService(CartRepository cartRepository, ProductService productService , @Lazy UserService userService){
+    public CartService(CartRepository cartRepository, @Lazy ProductService productService , @Lazy UserService userService){
         super(cartRepository, "Cart");
 
         this.cartRepository = cartRepository;
