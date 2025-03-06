@@ -20,12 +20,12 @@ public class OrderService extends MainService<Order>{
 
     @Autowired
     public OrderService( OrderRepository orderRepository) {
-
+        super(orderRepository, "Order");
         this.orderRepository = orderRepository;
     }
 
    public void addOrder(Order order) {
-       orderRepository.addOrder(order);
+        orderRepository.addOrder(order);
     }
     public ArrayList<Order> getOrders(){
         return orderRepository.getOrders();
@@ -34,6 +34,7 @@ public class OrderService extends MainService<Order>{
         return orderRepository.getOrderById(orderId);
     }
     public void deleteOrderById(UUID orderId) throws IllegalArgumentException{
+//        validateExistence(orderId);
         orderRepository.deleteOrderById(orderId);
     }
 }

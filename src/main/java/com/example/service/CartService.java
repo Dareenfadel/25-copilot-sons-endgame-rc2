@@ -23,20 +23,24 @@ public class CartService extends MainService<Cart>{
 //The Dependency Injection Variables
 //The Constructor with the requried variables mapping the Dependency Injection.
     CartRepository cartRepository;
-    ProductRepository productRepository;
-    UserRepository userRepository;
+    ProductService productService;
+    UserService userService;
     @Autowired
-    public CartService(CartRepository cartRepository, ProductRepository productRepository, UserRepository userRepository){
+    public CartService(CartRepository cartRepository, ProductService productService , UserService userService){
+        super(cartRepository, "Cart");
 
         this.cartRepository = cartRepository;
-        this.productRepository =  productRepository;
-        this.userRepository = userRepository;
+        this.productService =  productService;
+        this.userService = userService;
 
 
     }
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
     public Cart addCart(Cart cart){
 
-        User user = userRepository.getUserById(cart.getUserId());
+        User user = userService.getUserById(cart.getUserId());
         if(user==null){
             throw new NoSuchElementException("User not found");
         }
@@ -54,7 +58,7 @@ public class CartService extends MainService<Cart>{
         return cartRepository.getCartById(cartId);
     }
     public Cart getCartByUserId(UUID userId){
-        User user = userRepository.getUserById(userId);
+        User user = userService.getUserById(userId);
         if(user==null){
             throw new NoSuchElementException( "User not found");
         }
@@ -65,7 +69,7 @@ public class CartService extends MainService<Cart>{
     }
     public void addProductToCart(UUID cartId, Product product){
         //if product not exist add to products first instead of exception
-        Product existingProduct = productRepository.getProductById(product.getId());
+        Product existingProduct = productService.getProductById(product.getId());
         if (existingProduct == null) {
             throw new NoSuchElementException("Product not found!");
         }
@@ -79,10 +83,10 @@ public class CartService extends MainService<Cart>{
         cartRepository.deleteProductFromCart(cartId, product);
     }
     public void deleteCartById(UUID cartId){
-//        Cart cart = cartRepository.getCartById(cartId);
-//        if(cart==null){
-//            throw new NoSuchElementException( "Cart not found!");
-//        }
+        Cart cart = cartRepository.getCartById(cartId);
+        if(cart==null){
+            throw new NoSuchElementException( "Cart not found!");
+        }
         cartRepository.deleteCartById(cartId);
     }
         public Order checkoutCart(UUID userId) {

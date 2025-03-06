@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -489,7 +490,7 @@ class ProductServiceTest {
     }
 
     @Test
-    public void deleteProduct_WhenProductDoesNotExist_ShouldIgnoreDeleteAndReturnNull()
+    public void deleteProduct_WhenProductDoesNotExist_ShouldThrowException()
             throws StreamReadException, DatabindException, IOException {
         // Arrange
         var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 100.0);
@@ -497,24 +498,21 @@ class ProductServiceTest {
 
         writeTestProductData(List.of(product1, product2));
 
-        // Act
-        productService.deleteProductById(UUID.fromString("00000000-0000-0000-0000-000000000003"));
-
-        // Assert
-        assertEquals(List.of(product1, product2), readTestProductData());
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            productService.deleteProductById(UUID.fromString("00000000-0000-0000-0000-000000000003"));
+        });
     }
 
     @Test
-    public void deleteProduct_WhenNoProductsExist_ShouldIgnoreDeleteAndReturnNull()
-            throws StreamReadException, DatabindException, IOException {
+    public void deleteProduct_WhenNoProductsExist_ShouldThrowException()
+    {
         // Arrange
-        writeTestProductData(List.of());
 
-        // Act
-        productService.deleteProductById(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-
-        // Assert
-        assertEquals(List.of(), readTestProductData());
+        // Act & Assert
+        assertThrows(NoSuchElementException.class, () -> {
+            productService.deleteProductById(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        });
     }
 
     @Test

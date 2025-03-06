@@ -20,6 +20,7 @@ public class ProductService extends MainService<Product> {
     private final CartRepository cartRepository;
 
     public ProductService(ProductRepository productRepository, CartRepository cartRepository) {
+        super(productRepository, "Product");
         this.productRepository = productRepository;
         this.cartRepository = cartRepository;
     }

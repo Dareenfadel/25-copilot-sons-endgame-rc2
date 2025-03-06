@@ -39,7 +39,7 @@ public class CartController {
     public String addProductToCart(@PathVariable UUID cartId, @RequestBody Product product) {
         try {
             cartService.addProductToCart(cartId, product);
-            return (product.getName() + " added to the cart");
+            return ("Product added to the cart");
         } catch (Exception e) {
             return (e.getMessage());
         }

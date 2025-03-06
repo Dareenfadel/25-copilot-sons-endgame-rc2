@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import java.util.ArrayList;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -34,6 +35,10 @@ public class ProductRepository extends MainRepository<Product> {
     }
 
     public void deleteProductById(UUID productId) {
+        Product product = findById(productId);
+        if (product == null) {
+            throw new NoSuchElementException("Product not found");
+        }
         deleteById(productId);
     }
 
