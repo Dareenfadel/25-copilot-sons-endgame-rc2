@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 
 import com.example.model.Product;
@@ -11,6 +12,9 @@ import com.example.model.Product;
 @Repository
 public class ProductRepository extends MainRepository<Product> {
 
+    @Value("${spring.application.productDataPath}")
+    private String dataPath;
+    
     // ----------------------
     // CRUD Operations
     // ----------------------
@@ -36,9 +40,11 @@ public class ProductRepository extends MainRepository<Product> {
 
     public void deleteProductById(UUID productId) {
         Product product = findById(productId);
+        
         if (product == null) {
             throw new NoSuchElementException("Product not found");
         }
+        
         deleteById(productId);
     }
 
@@ -72,7 +78,7 @@ public class ProductRepository extends MainRepository<Product> {
 
     @Override
     protected String getDataPath() {
-        return "src/main/java/com/example/data/products.json";
+        return dataPath;
     }
 
     @Override
