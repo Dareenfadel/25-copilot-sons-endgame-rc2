@@ -30,7 +30,13 @@ public class UserService extends MainService<User>{
     }
 
         public User addUser(User user) {
-            return userRepository.addUser(user);
+        List<Order> orders=user.getOrders();
+        if(orders!=null){
+            for(Order order: orders){
+                  if(orderService.getOrderById(order.getId())==null)
+                      orderService.addOrder(order);
+            }    }
+        return userRepository.addUser(user);
         }
 
 
@@ -67,7 +73,11 @@ public class UserService extends MainService<User>{
 
 
         public void removeOrderFromUser(UUID userId, UUID orderId) {
+
           userRepository.removeOrderFromUser(userId, orderId);
+          if(orderService.getOrderById(orderId)!=null){
+              orderService.deleteOrderById(orderId);
+          }
     }
 
 
@@ -75,6 +85,12 @@ public class UserService extends MainService<User>{
         Cart cart= cartService.getCartByUserId(userId);
         if(cart!=null){
             cartService.deleteCartById(cart.getId());
+        }
+        List<Order> orders= getOrdersByUserId(userId);
+        if(orders!=null){
+            for(Order order: orders){
+                orderService.deleteOrderById(order.getId());
+            }
         }
             userRepository.deleteUserById(userId);
         }
