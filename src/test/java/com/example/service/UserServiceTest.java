@@ -481,6 +481,28 @@ public class UserServiceTest extends ServiceTest {
         // Assert
         assertEquals(List.of(), readTestUserData().get(0).getOrders());
     }
+    //when remove order should be removed from order repository
+    @Test
+    public void removeOrderFromUser_WhenOrderIsRemoved_ShouldRemoveOrderFromRepository() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var order1 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000101"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 100.0, List.of(product1, product2));
+        var order2 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000102"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 200.0, List.of(product1, product2));
+        var order3 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000103"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 300.0, List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2, order3));
+        userService.addUser(user);
+        //ACT
+        userService.removeOrderFromUser(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000102"));
+        //ASSERT
+        assertEquals(List.of(order1, order3), readTestOrderData());
+    }
+
+
+
+
+
+
 
     // ----------------------------
     //EMPTY CART TEST

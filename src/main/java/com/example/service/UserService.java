@@ -73,7 +73,11 @@ public class UserService extends MainService<User>{
 
 
         public void removeOrderFromUser(UUID userId, UUID orderId) {
+
           userRepository.removeOrderFromUser(userId, orderId);
+          if(orderService.getOrderById(orderId)!=null){
+              orderService.deleteOrderById(orderId);
+          }
     }
 
 
