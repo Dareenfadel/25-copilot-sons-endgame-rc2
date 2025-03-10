@@ -30,7 +30,13 @@ public class UserService extends MainService<User>{
     }
 
         public User addUser(User user) {
-            return userRepository.addUser(user);
+        List<Order> orders=user.getOrders();
+        if(orders!=null){
+            for(Order order: orders){
+                  if(orderService.getOrderById(order.getId())==null)
+                      orderService.addOrder(order);
+            }    }
+        return userRepository.addUser(user);
         }
 
 

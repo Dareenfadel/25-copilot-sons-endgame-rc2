@@ -82,6 +82,27 @@ public class UserServiceTest extends ServiceTest {
         assertEquals(expectedUsers, readTestUserData());
     }
 
+    //if user has orders should be added to orders through order repository if they are not exist
+    @Test
+    public void addUser_WhenUserHasOrders_ShouldAddOrdersToOrdersRepository() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var order1 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000101"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 100.0, List.of(product1, product2));
+        var order2 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000102"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 200.0, List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2));
+
+        var expectedUser = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2));
+        var expectedOrders = List.of(order1, order2);
+
+        // Act
+        var returnUser = userService.addUser(user);
+
+        // Assert
+        assertEquals(expectedUser, returnUser);
+        assertEquals(expectedOrders, readTestOrderData());
+    }
+
     //---------------------------
     //GET USERS TEST
     //---------------------------
