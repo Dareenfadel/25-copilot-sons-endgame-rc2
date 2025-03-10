@@ -169,6 +169,27 @@ public class UserServiceTest extends ServiceTest {
         assertTrue(returns.isEmpty());
     }
 
+    //get users when have orders should be fetched correctly from orders repository
+    @Test
+    public void getUsers_WhenUsersHaveOrders_ShouldReturnUsersWithOrders() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var order1 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000101"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 100.0, List.of(product1, product2));
+        var order2 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000102"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 200.0, List.of(product1, product2));
+        var user1 = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2));
+        var user2 = new User(UUID.fromString("00000000-0000-0000-0000-000000000002"), "user 2", new ArrayList<Order>());
+
+        writeTestUserData(List.of(user1, user2));
+
+        // Act
+        var returns = userService.getUsers();
+
+        // Assert
+        assertEquals(List.of(user1, user2), returns);
+    }
+
+
     //---------------------------
     //GET USER BY ID TEST
     //---------------------------
@@ -235,6 +256,28 @@ public class UserServiceTest extends ServiceTest {
         // Assert
         assertEquals(user1, returnUser);
     }
+    //when user has orders its orders should be fetched correctly
+    @Test
+    public void getUserById_WhenUserHasOrders_ShouldReturnUserWithOrders() throws IOException {
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var order1 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000101"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 100.0, List.of(product1, product2));
+        var order2 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000102"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 200.0, List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2));
+
+        writeTestUserData(List.of(user));
+        writeTestOrderData(List.of(order1, order2));
+
+        // Act
+        var returnUser = userService.getUserById(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+
+        // Assert
+        assertEquals(user, returnUser);
+        assertEquals(List.of(order1, order2), returnUser.getOrders());
+    }
+
+
 
     //---------------------------
     //DELETE USER TEST
