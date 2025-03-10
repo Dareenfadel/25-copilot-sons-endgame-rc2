@@ -330,6 +330,28 @@ public class UserServiceTest extends ServiceTest {
         // Assert
         assertEquals(List.of(user2), readTestUserData());
     }
+    //if user has cart and orders should delete cart and delete its orders
+    @Test
+    public void deleteUserById_WhenHaveOrdersAndCart_ShouldDeleteThem()throws IOException{
+        // Arrange
+        var product1 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000001"), "Product 1", 10.0);
+        var product2 = new Product(UUID.fromString("00000000-0000-0000-0000-000000000002"), "Product 2", 20.0);
+        var order1 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000101"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 100.0, List.of(product1, product2));
+        var order2 = new Order(UUID.fromString("00000000-0000-0000-0000-000000000102"), UUID.fromString("00000000-0000-0000-0000-000000000001"), 200.0, List.of(product1, product2));
+        var user = new User(UUID.fromString("00000000-0000-0000-0000-000000000001"), "user 1", List.of(order1, order2));
+        var cart = new Cart(UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.fromString("00000000-0000-0000-0000-000000000001"), List.of(product1, product2));
+        userService.addUser(user);
+        cartService.addCart(cart);
+        // Act
+        userService.deleteUserById(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        // Assert
+        assertEquals(List.of(), readTestUserData());
+        assertEquals(List.of(), readTestOrderData());
+        assertEquals(List.of(), readTestCartData());
+
+    }
+
+
     //.....................
     //GET THE USER'S OREDERS
     //.....................

@@ -86,6 +86,12 @@ public class UserService extends MainService<User>{
         if(cart!=null){
             cartService.deleteCartById(cart.getId());
         }
+        List<Order> orders= getOrdersByUserId(userId);
+        if(orders!=null){
+            for(Order order: orders){
+                orderService.deleteOrderById(order.getId());
+            }
+        }
             userRepository.deleteUserById(userId);
         }
 
